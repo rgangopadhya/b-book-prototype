@@ -7,11 +7,13 @@ import {
 } from 'react-native';
 import { StackNavigator } from 'react-navigation';
 import Landing from './app/Containers/Landing';
+import Login from './app/Containers/Login';
 import Create from './app/Containers/Create';
 import List from './app/Containers/List';
 
 const Navigator = StackNavigator({
   Landing: { screen: Landing },
+  Login: { screen: Login },
   Create: { screen: Create },
   List: { screen: List }
 });

@@ -15,6 +15,11 @@ import {
   FontAwesome
 } from '@expo/vector-icons';
 import color from '../utils/colors';
+import {
+  getScenes,
+  makeNewStory,
+  saveSceneRecording
+} from '../api';
 
 const STORY_IMAGES = [
   require('../../assets/1.jpg'),
@@ -103,8 +108,9 @@ export default class Create extends Component {
       isPlaying: false,
       volume: 1,
       haveRecordingPermissions: false,
-      imageSources: STORY_IMAGES,
-      currentImageIndex: 0
+      story: null,
+      scenes: [],
+      currentSceneIndex: 0
     };
   }
 
@@ -115,8 +121,17 @@ export default class Create extends Component {
     });
   }
 
+  async _loadScenes() {
+    this.startWaiting();
+    const scenes = await getScenes();
+    const story = await makeNewStory();
+    this.setState({ scenes, story });
+    this.stopWaiting();
+  }
+
   componentDidMount() {
     this._askForPermissions();
+    this._loadScenes();
   }
 
   startWaiting() {
@@ -149,8 +164,20 @@ export default class Create extends Component {
 
     const recording = new Audio.Recording();
     this.recording = recording;
+    const recordingSettings = {
+      ios: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.ios, {
+        extension: '.mp4',
+        outputFormat: Expo.Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC
+      }),
+      android: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.android, {
+        extension: '.mp4',
+        outputFormat: Expo.Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4
+      })
+    };
+    console.log('settings', recordingSettings);
     try {
-      await this.recording.prepareToRecordAsync(Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+      // await this.recording.prepareToRecordAsync(Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
+      await this.recording.prepareToRecordAsync(recordingSettings);
       console.log('.   prepareToRecordAsync');
       recording.setOnRecordingStatusUpdate(this._updateScreenForRecordingStatus);
       await this.recording.startAsync();
@@ -220,19 +247,32 @@ export default class Create extends Component {
     }
   }
 
-  _onConfirmRecording() {
+  async _onConfirmRecording() {
     this.startWaiting();
     // save recording. for now just unload
+    await this._saveRecording(this.recording.getURI());
     this._resetRecording();
-    if (this.state.currentImageIndex >= this.state.imageSources.length - 1) {
+    if (this.state.currentSceneIndex >= this.state.scenes.length - 1) {
       // transition to home page
       console.log('=== trying to get out ====');
       this.props.navigation.navigate('Landing');
     } else {
       console.log('=== not trying to get out yet ===');
-      this.setState({ currentImageIndex: this.state.currentImageIndex + 1 });
+      this.setState({ currentSceneIndex: this.state.currentSceneIndex + 1 });
     }
     this.stopWaiting();
+  }
+
+  async _saveRecording(uri) {
+    try {
+      await saveSceneRecording(
+        this.state.story.id,
+        this.state.scenes[this.state.currentSceneIndex].id,
+        uri
+      );
+    } catch(error) {
+      console.log('Error saving, try again');
+    }
   }
 
   _updateScreenForSoundStatus = (status) => {
@@ -293,12 +333,13 @@ export default class Create extends Component {
       height: Dimensions.get('window').height * 0.85,
       width: Dimensions.get('window').width
     }
+    const backgroundSource = this.state.scenes.length > 0 ? { uri: this.state.scenes[this.state.currentSceneIndex].image } : null;
     return (
       <View style={styles.container}>
         <ImageBackground
           resizeMode='contain'
           style={[styles.img, imageDimensions]}
-          source={this.state.imageSources[this.state.currentImageIndex]}
+          source={backgroundSource}
         >
           <View style={[styles.imageOverlay, overlayStyle]}>
             {showCancelRecording &&
