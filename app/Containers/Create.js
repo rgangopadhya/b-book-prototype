@@ -268,7 +268,8 @@ export default class Create extends Component {
       await saveSceneRecording(
         this.state.story.id,
         this.state.scenes[this.state.currentSceneIndex].id,
-        uri
+        uri,
+        this.state.currentSceneIndex
       );
     } catch(error) {
       console.log('Error saving, try again');

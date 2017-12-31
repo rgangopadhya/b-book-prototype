@@ -92,7 +92,7 @@ export async function makeNewStory() {
   return result.story;
 }
 
-export async function saveSceneRecording(storyId, sceneId, recordingUri) {
+export async function saveSceneRecording(storyId, sceneId, recordingUri, order) {
   let formData = new FormData();
   let uriParts = recordingUri.split('.');
   let fileType = uriParts[uriParts.length - 1];
@@ -103,6 +103,7 @@ export async function saveSceneRecording(storyId, sceneId, recordingUri) {
   });
   formData.append('story', storyId);
   formData.append('scene', sceneId);
+  formData.append('order', order);
   const result = await postRequest('v0/scene_recordings/', formData, {
     'Content-Type': 'multipart/form-data'
   });
@@ -114,4 +115,24 @@ export async function getScenes() {
   // filtering by character, randomized
   const result = await getRequest('v0/scenes/?per_page=5');
   return result.scenes;
+}
+
+export async function getStories() {
+  const result = await getRequest('v0/stories/');
+  return result.stories;
+}
+
+export async function loadStoryData(storyId) {
+  console.log('=== about to load story ===');
+  let { story, scenes, scene_recordings } = await getRequest(
+    `v0/stories/${storyId}/?include[]=recordings.scene.`
+  );
+  // order scene_recordings and scenes by order
+  const sceneRecordings = scene_recordings.sort((a, b) => a.order - b.order);
+  scenes = scenes.sort((a, b) => {
+    const aRecording = sceneRecordings.find(r => r.scene === a.id);
+    const bRecording = sceneRecordings.find(r => r.scene === b.id);
+    return aRecording.order - bRecording.order;
+  });
+  return { scenes, sceneRecordings };
 }
