@@ -331,7 +331,7 @@ export default class Create extends Component {
     const showRecordingPrompt = !this.state.isRecording && !this.state.hasRecording;
     const showCancelRecording = this.state.isRecording || this.state.hasRecording;
     const imageDimensions = {
-      height: Dimensions.get('window').height * 0.85,
+      height: Dimensions.get('window').height,
       width: Dimensions.get('window').width
     }
     const backgroundSource = this.state.scenes.length > 0 ? { uri: this.state.scenes[this.state.currentSceneIndex].image } : null;

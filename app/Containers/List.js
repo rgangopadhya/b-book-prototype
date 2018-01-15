@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import {
+  FlatList,
+  Image,
   StyleSheet,
   Text,
   TouchableHighlight,
@@ -8,6 +10,7 @@ import {
 import {
   getStories
 } from '../api';
+import color from '../utils/colors';
 
 export default class List extends Component {
 
@@ -18,9 +21,19 @@ export default class List extends Component {
     };
   }
 
+  startWaiting() {
+    this.props.screenProps.showSpinner();
+  }
+
+  stopWaiting() {
+    this.props.screenProps.hideSpinner();
+  }
+
   async componentDidMount() {
+    this.startWaiting();
     const stories = await getStories();
     this.setState({ stories });
+    this.stopWaiting();
   }
 
   _onSelectStory(story) {
@@ -31,17 +44,33 @@ export default class List extends Component {
 
   render() {
     return (
-      <View>
-        {this.state.stories.map((story) => {
-          return (
-            <TouchableHighlight
-              onPress={() => { this._onSelectStory(story) }}
-              key={story.id}
-            >
-              <Text>{story.id}</Text>
-            </TouchableHighlight>
-          )
-        })}
+      <View style={styles.container}>
+        {this.state.stories &&
+          <FlatList
+            data={this.state.stories}
+            keyExtractor={(item) => item.id}
+            horizontal={true}
+            renderItem={({item}) => {
+              console.log('=== item ===', item);
+              return (
+                <TouchableHighlight
+                  onPress={() => { this._onSelectStory(item) }}
+                  key={item.id}
+                  style={styles.storyContainer}
+                >
+                  <View style={styles.story}>
+                    <Text>{item.created_at}</Text>
+                    <Image
+                      source={{uri: item.cover_image}}
+                      style={{height: 200, width: 200}}
+                      resizeMode='contain'
+                    />
+                  </View>
+                </TouchableHighlight>
+              );
+            }}
+          />
+        }
       </View>
     );
   }
@@ -51,7 +80,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1
   },
-  list: {
+  storyContainer: {
+    flex: 1,
+    backgroundColor: color('tan', 200),
+    padding: 20
+  },
+  story: {
     flex: 1
   }
 });

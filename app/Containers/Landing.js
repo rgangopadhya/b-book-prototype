@@ -1,15 +1,26 @@
 import React, { Component } from 'react';
 import {
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from 'react-native'
+import color from '../utils/colors';
 
-const Option = ({onPress, title}) => {
+const IMAGES = {
+  listen: require('../../assets/listen.png'),
+  create: require('../../assets/record_doggie.png')
+}
+
+const Option = ({onPress, imageSource}) => {
   return (
     <TouchableOpacity onPress={onPress} style={styles.option}>
-      <Text>{title}</Text>
+      <Image
+        source={imageSource}
+        style={styles.optionImage}
+        resizeMode='contain'
+      />
     </TouchableOpacity>
   );
 }
@@ -42,8 +53,8 @@ export default class Landing extends Component {
           </TouchableOpacity>
         </View>
         <View style={styles.options}>
-          <Option onPress={this.onPressList.bind(this)} title='List'/>
-          <Option onPress={this.onPressCreate.bind(this)} title='Create'/>
+          <Option onPress={this.onPressList.bind(this)} imageSource={IMAGES.listen}/>
+          <Option onPress={this.onPressCreate.bind(this)} imageSource={IMAGES.create}/>
         </View>
 			</View>
 		);
@@ -61,9 +72,18 @@ const styles = StyleSheet.create({
   },
   options: {
     flex: 1,
-    flexDirection: 'row'
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: color('tan', 100),
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   option: {
-    flex: 1
+    flex: 1,
+    minWidth: 300,
+    alignItems: 'center'
+  },
+  optionImage: {
+    width: 300
   }
 })
