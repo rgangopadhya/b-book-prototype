@@ -38,6 +38,7 @@ export async function _makeRequest(method, path, body=null, addedHeaders={}) {
     const body = await response.json();
     return body;
   } else {
+    debugger;
     throw new APIError(response);
   }
 }
@@ -72,6 +73,35 @@ export async function login(username, password) {
   } else {
     throw new APIError(response);
   }
+}
+
+export async function register(username, email, pw1, pw2) {
+  const headers = new Headers();
+  headers.append('Content-Type', 'application/json');
+  const payload = {
+    method: 'post',
+    headers,
+    body: JSON.stringify({ username, password1: pw1, password2: pw2, email })
+  };
+  const response = await fetch(getUrl('rest-auth/registration/'), payload);
+  if (response.ok) {
+    const { key } = await response.json();
+    console.log('=== setting key', key);
+    setUserToken(key);
+  } else {
+    throw new APIError(response);
+  }
+}
+
+export async function checkLogin() {
+  try {
+    await getRequest('v0/users/?per_page=1');
+  } catch(error) {
+    if (error.isAPIError && error.response.status_code === 401) {
+      return false;
+    }
+  }
+  return true;
 }
 
 async function getFromStorage(key) {

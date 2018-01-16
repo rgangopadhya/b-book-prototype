@@ -10,6 +10,7 @@ import {
 import {
   login
 } from '../api';
+import { maskPassword } from '../utils/login';
 
 
 export default class Login extends Component {
@@ -25,6 +26,10 @@ export default class Login extends Component {
   _submitLogin() {
     login(this.state.username, this.state.password);
     this.props.navigation.navigate('Landing');
+  }
+
+  _goToCreateAccount() {
+    this.props.navigation.navigate('CreateAccount');
   }
 
   render() {
@@ -46,7 +51,7 @@ export default class Login extends Component {
           <TextInput
             style={styles.textInput}
             onChangeText={(text) => this.setState({ password: text })}
-            value={this.state.password}
+            value={maskPassword(this.state.password)}
             autoCorrect={false}
             autoCapitalize='none'
           />
@@ -58,6 +63,14 @@ export default class Login extends Component {
           <View>
             <Text>Submit</Text>
           </View>
+        </TouchableHighlight>
+        <TouchableHighlight
+          onPress={this._goToCreateAccount.bind(this)}
+          style={styles.createAccount}
+        >
+          <Text style={styles.createAccountText}>
+            Don't have an account? Create one
+          </Text>
         </TouchableHighlight>
       </View>
     );
@@ -81,6 +94,14 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 1,
     padding: 10
+  },
+  createAccount: {
+    padding: 20
+  },
+  createAccountText: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    fontWeight: 'bold'
   },
   submitLogin: {
     padding: 20,

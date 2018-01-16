@@ -7,6 +7,9 @@ import {
   View
 } from 'react-native'
 import color from '../utils/colors';
+import {
+  checkLogin
+} from '../api';
 
 const IMAGES = {
   listen: require('../../assets/listen.png'),
@@ -37,21 +40,19 @@ export default class Landing extends Component {
     navigate('Create');
   }
 
-  onPressLogin() {
-    const { navigate } = this.props.navigation;
-    navigate('Login');
+  async componentDidMount() {
+    // check if user logged in: if so, navigate to Landing
+    this.props.screenProps.showSpinner();
+    const isLoggedIn = await checkLogin();
+    if (!isLoggedIn) {
+      this.props.navigation.navigate('Login');
+    }
+    this.props.screenProps.hideSpinner();
   }
 
 	render() {
 		return (
 			<View style={styles.container}>
-        <View style={styles.loginButton}>
-          <TouchableOpacity
-            onPress={this.onPressLogin.bind(this)}
-          >
-            <Text>Login</Text>
-          </TouchableOpacity>
-        </View>
         <View style={styles.options}>
           <Option onPress={this.onPressList.bind(this)} imageSource={IMAGES.listen}/>
           <Option onPress={this.onPressCreate.bind(this)} imageSource={IMAGES.create}/>
@@ -65,11 +66,6 @@ const styles = StyleSheet.create({
 	container: {
 		flex: 1
 	},
-  loginButton: {
-    alignItems: 'center',
-    padding: 10,
-    backgroundColor: 'blue'
-  },
   options: {
     flex: 1,
     flexDirection: 'row',
