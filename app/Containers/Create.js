@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import {
   Dimensions,
+  Image,
   ImageBackground,
   StyleSheet,
   Text,
@@ -21,14 +22,6 @@ import {
   saveSceneRecording
 } from '../api';
 
-const STORY_IMAGES = [
-  require('../../assets/1.jpg'),
-  require('../../assets/2.jpg'),
-  require('../../assets/3.jpg'),
-  require('../../assets/4.jpg'),
-  require('../../assets/5.jpg')
-]
-
 const StartRecording = ({onPress}) => {
   return (
     <TouchableHighlight
@@ -38,7 +31,7 @@ const StartRecording = ({onPress}) => {
       <View style={styles.recordPrompt}>
         <FontAwesome
           name='microphone'
-          size={70}
+          size={50}
           color='white'
         />
       </View>
@@ -46,18 +39,33 @@ const StartRecording = ({onPress}) => {
   );
 }
 
-const StopRecording = ({onPress}) => {
+const StopRecording = ({onPress, recordingDuration, nextSceneImage}) => {
+  const recordingMinutes = parseInt(recordingDuration / (1000 * 60));
+  const recordingSeconds = parseInt((recordingDuration - recordingMinutes * 60 * 1000) / 1000);
+  const time = `${recordingMinutes}:${recordingSeconds}`;
   return (
     <TouchableHighlight
       onPress={onPress}
       style={styles.stopRecording}
     >
-      <View style={styles.recordPrompt}>
-        <FontAwesome
-          name='stop'
-          size={70}
-          color='white'
+      <View style={styles.stopRecordingContainer}>
+        <Text style={styles.recordingDurationText}>
+          {time}
+        </Text>
+        <Image
+          resizeMode='contain'
+          source={require('../../assets/wave.png')}
+          style={{height: 30, width: 600}}
         />
+        {nextSceneImage &&
+          <View style={{paddingLeft: 15}}>
+            <Image
+              resizeMode='contain'
+              source={nextSceneImage}
+              style={{height: 170, width: 127}}
+            />
+          </View>
+        }
       </View>
     </TouchableHighlight>
   );
@@ -73,7 +81,7 @@ const Playback = ({onPlayPress, onConfirm, isPlaying}) => {
         <View style={styles.recordPrompt}>
           <FontAwesome
             name={isPlaying ? 'pause' : 'play'}
-            size={70}
+            size={50}
             color='white'
           />
         </View>
@@ -84,7 +92,7 @@ const Playback = ({onPlayPress, onConfirm, isPlaying}) => {
       >
         <FontAwesome
           name='check'
-          size={70}
+          size={50}
           color='white'
         />
       </TouchableHighlight>
@@ -335,6 +343,11 @@ export default class Create extends Component {
       width: Dimensions.get('window').width
     }
     const backgroundSource = this.state.scenes.length > 0 ? { uri: this.state.scenes[this.state.currentSceneIndex].image } : null;
+    let nextSceneImage = null;
+    if (this.state.currentSceneIndex < this.state.scenes.length - 1) {
+      const nextScene = this.state.scenes[this.state.currentSceneIndex + 1];
+      nextSceneImage = { uri: nextScene.image };
+    }
     return (
       <View style={styles.container}>
         <ImageBackground
@@ -361,6 +374,8 @@ export default class Create extends Component {
             {this.state.isRecording &&
               <StopRecording
                 onPress={this.stopRecording.bind(this)}
+                recordingDuration={this.state.recordingDuration}
+                nextSceneImage={nextSceneImage}
               />
             }
             {!this.state.isRecording && this.state.hasRecording &&
@@ -387,27 +402,42 @@ const styles = StyleSheet.create({
     flex: 1
   },
   imageOverlay: {
-    height: '85%',
+    height: '90%',
     justifyContent: 'flex-start',
     alignItems: 'flex-end'
   },
   bottomBar: {
-    backgroundColor: color('teal', 600),
-    height: '15%'
+    height: '10%'
   },
   startRecording: {
     flex: 1,
-    backgroundColor: color('teal', 600),
+    backgroundColor: color('teal', 500),
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center'
   },
   stopRecording: {
     flex: 1,
-    backgroundColor: 'red',
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
+    paddingLeft: 40
+  },
+  stopRecordingContainer: {
+    flexDirection: 'row',
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  recordingDurationText: {
+    color: color('teal', 500),
+    fontSize: 50,
+    fontWeight: 'bold',
+    width: 200,
+    textAlign: 'center',
+    textShadowOffset: { width: 1, height: 1},
+    textShadowColor: '#045384'
   },
   playback: {
     backgroundColor: 'blue',
@@ -422,7 +452,6 @@ const styles = StyleSheet.create({
     flex: 1
   },
   recordPrompt: {
-
   },
   cancelButton: {
 
