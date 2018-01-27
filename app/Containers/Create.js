@@ -29,7 +29,14 @@ const durationToTime = (durationMillis) => {
   }
   const minutes = parseInt(durationMillis/ (1000 * 60));
   const seconds = parseInt((durationMillis - minutes * 60 * 1000) / 1000);
-  return `${minutes}:${seconds}`;
+  return `${minutes}:${addLeadingZero(seconds)}`;
+}
+
+const addLeadingZero = (seconds) => {
+  if (seconds / 10 > 1) {
+    return seconds;
+  }
+  return `0${seconds}`;
 }
 
 const StartRecording = ({onPress}) => {
@@ -155,6 +162,18 @@ export default class Create extends Component {
   componentDidMount() {
     this._askForPermissions();
     this._loadScenes();
+  }
+
+  async componentWillUnmount() {
+    if (this.recording !== null && this.recording !== undefined) {
+      await this.recording.stopAndUnloadAsync();
+      this.recording.setOnRecordingStatusUpdate(null);
+      this.recording = null;
+    }
+    if (this.sound != null) {
+      this.sound.stopAsync();
+      this.sound = null;
+    }
   }
 
   startWaiting() {
@@ -374,8 +393,11 @@ export default class Create extends Component {
             {showCancelRecording &&
                 <TouchableHighlight
                   onPress={this._resetRecording.bind(this)}
+                  style={styles.cancelButton}
                 >
-                  <FontAwesome name='close' size={60} color='gray'/>
+                  <Image
+                    source={require('../../assets/close.png')}
+                  />
                 </TouchableHighlight>
             }
           </View>
@@ -421,6 +443,9 @@ const styles = StyleSheet.create({
     height: '90%',
     justifyContent: 'flex-start',
     alignItems: 'flex-end'
+  },
+  cancelButton: {
+    padding: 20
   },
   bottomBar: {
     height: '10%'
