@@ -6,6 +6,9 @@ const colorMap = {
   'tan': {
     100: '#F1CD9F',
     200: '#F0C792'
+  },
+  'red': {
+    300: '#ED7461'
   }
 }
 

@@ -16,11 +16,21 @@ import {
   FontAwesome
 } from '@expo/vector-icons';
 import color from '../utils/colors';
+import fonts from '../utils/fonts';
 import {
   getScenes,
   makeNewStory,
   saveSceneRecording
 } from '../api';
+
+const durationToTime = (durationMillis) => {
+  if (!durationMillis) {
+    return null;
+  }
+  const minutes = parseInt(durationMillis/ (1000 * 60));
+  const seconds = parseInt((durationMillis - minutes * 60 * 1000) / 1000);
+  return `${minutes}:${seconds}`;
+}
 
 const StartRecording = ({onPress}) => {
   return (
@@ -28,21 +38,17 @@ const StartRecording = ({onPress}) => {
       onPress={onPress}
       style={styles.startRecording}
     >
-      <View style={styles.recordPrompt}>
-        <FontAwesome
-          name='microphone'
-          size={50}
-          color='white'
-        />
-      </View>
+      <FontAwesome
+        name='microphone'
+        size={50}
+        color='white'
+      />
     </TouchableHighlight>
   );
 }
 
 const StopRecording = ({onPress, recordingDuration, nextSceneImage}) => {
-  const recordingMinutes = parseInt(recordingDuration / (1000 * 60));
-  const recordingSeconds = parseInt((recordingDuration - recordingMinutes * 60 * 1000) / 1000);
-  const time = `${recordingMinutes}:${recordingSeconds}`;
+  const time = durationToTime(recordingDuration);
   return (
     <TouchableHighlight
       onPress={onPress}
@@ -71,29 +77,38 @@ const StopRecording = ({onPress, recordingDuration, nextSceneImage}) => {
   );
 }
 
-const Playback = ({onPlayPress, onConfirm, isPlaying}) => {
+const Playback = ({
+  onPlayPress, onConfirm, isPlaying,
+  recordingDuration, playbackDuration
+}) => {
+  const recordingTime = durationToTime(recordingDuration);
+  const playbackTime = durationToTime(playbackDuration);
+  const time = isPlaying && playbackDuration ? `${playbackTime} / ${recordingTime}` : recordingTime;
   return (
     <View style={styles.playback}>
       <TouchableHighlight
         onPress={onPlayPress}
         style={styles.playRecording}
       >
-        <View style={styles.recordPrompt}>
+        <View style={styles.playRecordingIn}>
           <FontAwesome
-            name={isPlaying ? 'pause' : 'play'}
+            name={isPlaying ? 'pause-circle' : 'play-circle'}
             size={50}
-            color='white'
+            color={color('teal', 600)}
           />
+          <Text style={styles.recordingTimelineTime}>
+            {time}
+          </Text>
+          <View style={styles.recordingTimeline}/>
         </View>
       </TouchableHighlight>
       <TouchableHighlight
         onPress={onConfirm}
         style={styles.confirmRecording}
       >
-        <FontAwesome
-          name='check'
-          size={50}
-          color='white'
+        <Image
+          source={require('../../assets/checkmark.png')}
+          style={{width: 52, height: 36}}
         />
       </TouchableHighlight>
     </View>
@@ -335,7 +350,7 @@ export default class Create extends Component {
       opacity: 0.8
     };
     console.log('=== rendering ==', this.state);
-    const overlayStyle = this.state.isRecording ? {} : hiddenOverlay;
+    const overlayStyle = this.state.isRecording || this.state.hasRecording ? {} : hiddenOverlay;
     const showRecordingPrompt = !this.state.isRecording && !this.state.hasRecording;
     const showCancelRecording = this.state.isRecording || this.state.hasRecording;
     const imageDimensions = {
@@ -359,7 +374,6 @@ export default class Create extends Component {
             {showCancelRecording &&
                 <TouchableHighlight
                   onPress={this._resetRecording.bind(this)}
-                  style={styles.cancelButton}
                 >
                   <FontAwesome name='close' size={60} color='gray'/>
                 </TouchableHighlight>
@@ -383,6 +397,8 @@ export default class Create extends Component {
                 onPlayPress={this._onPlayPausePressed.bind(this)}
                 onConfirm={this._onConfirmRecording.bind(this)}
                 isPlaying={this.state.isPlaying}
+                recordingDuration={this.state.recordingDuration}
+                playbackDuration={this.state.soundPosition}
               />
             }
           </View>
@@ -432,28 +448,47 @@ const styles = StyleSheet.create({
   },
   recordingDurationText: {
     color: color('teal', 500),
-    fontSize: 50,
-    fontWeight: 'bold',
     width: 200,
     textAlign: 'center',
     textShadowOffset: { width: 1, height: 1},
-    textShadowColor: '#045384'
+    textShadowColor: '#045384',
+    ...fonts.bold
   },
   playback: {
-    backgroundColor: 'blue',
+    flex: 1,
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center'
   },
   playRecording: {
-    flex: 3
+    flex: 3,
+    padding: 30
   },
-  confirmRecording: {
+  playRecordingIn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  recordingTimeline: {
+    backgroundColor: color('red', 300),
+    height: 10,
+    shadowOffset: { width: 1, height: 1},
+    shadowColor: 'gray',
     flex: 1
   },
-  recordPrompt: {
+  recordingTimelineTime: {
+    paddingHorizontal: 10,
+    color: color('red', 300),
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowColor: '#045384',
+    ...fonts.bold
   },
-  cancelButton: {
-
-  }
+  confirmRecording: {
+    flex: 1,
+    backgroundColor: color('teal', 500),
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20
+  },
 });
