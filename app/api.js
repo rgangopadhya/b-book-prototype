@@ -122,7 +122,7 @@ export async function makeNewStory() {
   return result.story;
 }
 
-export async function saveSceneRecording(storyId, sceneId, recordingUri, order) {
+export async function saveSceneRecording(storyId, sceneId, recordingUri, duration, order) {
   let formData = new FormData();
   let uriParts = recordingUri.split('.');
   let fileType = uriParts[uriParts.length - 1];
@@ -134,6 +134,7 @@ export async function saveSceneRecording(storyId, sceneId, recordingUri, order) 
   formData.append('story', storyId);
   formData.append('scene', sceneId);
   formData.append('order', order);
+  formData.append('duration', duration);
   const result = await postRequest('v0/scene_recordings/', formData, {
     'Content-Type': 'multipart/form-data'
   });
@@ -149,6 +150,7 @@ export async function getScenes() {
 
 export async function getStories() {
   const result = await getRequest('v0/stories/');
+  console.log('=== got stories====', result);
   return result.stories;
 }
 

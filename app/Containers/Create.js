@@ -292,7 +292,8 @@ export default class Create extends Component {
   async _onConfirmRecording() {
     this.startWaiting();
     // save recording. for now just unload
-    await this._saveRecording(this.recording.getURI());
+    const recordingDuration = this.state.recordingDuration;
+    await this._saveRecording(this.recording.getURI(), recordingDuration);
     this._resetRecording();
     if (this.state.currentSceneIndex >= this.state.scenes.length - 1) {
       // transition to home page
@@ -305,12 +306,14 @@ export default class Create extends Component {
     this.stopWaiting();
   }
 
-  async _saveRecording(uri) {
+  async _saveRecording(uri, duration) {
+    console.log('== about to save', duration);
     try {
       await saveSceneRecording(
         this.state.story.id,
         this.state.scenes[this.state.currentSceneIndex].id,
         uri,
+        duration,
         this.state.currentSceneIndex
       );
     } catch(error) {

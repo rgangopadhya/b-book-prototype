@@ -4,6 +4,7 @@ const colorMap = {
     500: '#52A49F'
   },
   'tan': {
+    50: '#EADCCE',
     100: '#F1CD9F',
     200: '#F0C792'
   },

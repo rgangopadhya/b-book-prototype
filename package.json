@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "expo": "^24.0.0",
+    "moment": "^2.20.1",
     "react": "16.0.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-24.0.0.tar.gz",
     "react-native-scripts": "^1.8.1",
