@@ -19,8 +19,7 @@ import color from '../utils/colors';
 import fonts from '../utils/fonts';
 import {
   getScenes,
-  makeNewStory,
-  saveSceneRecording
+  saveStoryRecording
 } from '../api';
 
 const durationToTime = (durationMillis) => {
@@ -54,70 +53,48 @@ const StartRecording = ({onPress}) => {
   );
 }
 
-const StopRecording = ({onPress, recordingDuration, nextSceneImage}) => {
+const RecordingControl = ({
+  onConfirm, onPause, onResume, onCancel,
+  recordingDuration, nextSceneImage, isPaused
+}) => {
   const time = durationToTime(recordingDuration);
   return (
-    <TouchableHighlight
-      onPress={onPress}
-      style={styles.stopRecording}
-    >
-      <View style={styles.stopRecordingContainer}>
-        <Text style={styles.recordingDurationText}>
-          {time}
-        </Text>
-        <Image
-          resizeMode='contain'
-          source={require('../../assets/wave.png')}
-          style={{height: 30, width: 600}}
-        />
-        {nextSceneImage &&
-          <View style={{paddingLeft: 15}}>
-            <Image
-              resizeMode='contain'
-              source={nextSceneImage}
-              style={{height: 170, width: 127}}
-            />
-          </View>
-        }
-      </View>
-    </TouchableHighlight>
-  );
-}
-
-const Playback = ({
-  onPlayPress, onConfirm, isPlaying,
-  recordingDuration, playbackDuration
-}) => {
-  const recordingTime = durationToTime(recordingDuration);
-  const playbackTime = durationToTime(playbackDuration);
-  const time = isPlaying && playbackDuration ? `${playbackTime} / ${recordingTime}` : recordingTime;
-  return (
-    <View style={styles.playback}>
+    <View style={styles.recordingControl}>
       <TouchableHighlight
-        onPress={onPlayPress}
-        style={styles.playRecording}
+        onPress={onCancel}
+        style={styles.cancelButton}
       >
-        <View style={styles.playRecordingIn}>
-          <FontAwesome
-            name={isPlaying ? 'pause-circle' : 'play-circle'}
-            size={50}
-            color={color('teal', 600)}
-          />
-          <Text style={styles.recordingTimelineTime}>
+        <Image
+          source={require('../../assets/close.png')}
+        />
+      </TouchableHighlight>
+      <TouchableHighlight
+        style={styles.recordingState}
+        onPress={isPaused ? onResume: onPause}
+      >
+        <View>
+          <Text style={styles.recordingDurationText}>
             {time}
           </Text>
-          <View style={styles.recordingTimeline}/>
+          <Image
+            resizeMode='contain'
+            source={require('../../assets/wave.png')}
+            style={{height: 30, width: 600}}
+          />
         </View>
       </TouchableHighlight>
-      <TouchableHighlight
+      {nextSceneImage &&
+        <TouchableHighlight
+        style={{paddingLeft: 15}}
         onPress={onConfirm}
-        style={styles.confirmRecording}
       >
-        <Image
-          source={require('../../assets/checkmark.png')}
-          style={{width: 52, height: 36}}
-        />
-      </TouchableHighlight>
+          <Image
+            resizeMode='contain'
+            source={nextSceneImage}
+            style={{height: 170, width: 127}}
+          />
+        </TouchableHighlight>
+      }
     </View>
   );
 }
@@ -126,19 +103,16 @@ export default class Create extends Component {
 
   constructor(props) {
     super(props);
+    this.sceneRecordings = [];
     this.state = {
       isLoading: false,
+      recordingStarted: false,
       hasRecording: false,
       isRecording: false,
+      recordingPaused: false,
       currentImage: null,
-      soundPosition: null,
-      soundDuration: null,
       recordingDuration: null,
-      shouldPlay: false,
-      isPlaying: false,
-      volume: 1,
       haveRecordingPermissions: false,
-      story: null,
       scenes: [],
       currentSceneIndex: 0
     };
@@ -154,8 +128,7 @@ export default class Create extends Component {
   async _loadScenes() {
     this.startWaiting();
     const scenes = await getScenes();
-    const story = await makeNewStory();
-    this.setState({ scenes, story });
+    this.setState({ scenes });
     this.stopWaiting();
   }
 
@@ -218,11 +191,11 @@ export default class Create extends Component {
     };
     console.log('settings', recordingSettings);
     try {
-      // await this.recording.prepareToRecordAsync(Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY);
       await this.recording.prepareToRecordAsync(recordingSettings);
       console.log('.   prepareToRecordAsync');
       recording.setOnRecordingStatusUpdate(this._updateScreenForRecordingStatus);
       await this.recording.startAsync();
+      this.setState({ recordingStarted: true });
       this.stopWaiting();
       console.log('.   recording.startAsync');
     } catch (error) {
@@ -239,39 +212,8 @@ export default class Create extends Component {
     } catch(error) {
       console.log('Stop recording error', error);
     }
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-      playsInSilentModeIOS: true,
-      playsInSilentLockedModeIOS: true,
-      shouldDuckAndroid: true,
-      interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-    });
-    const { sound, status } = await this.recording.createNewLoadedSound(
-      {volume: this.state.volume},
-      this._updateScreenForSoundStatus
-    );
-    this.sound = sound;
     this.stopWaiting();
     console.log('     Set hasRecording');
-  }
-
-  _onPlayPausePressed() {
-    console.log('=== on play pause pressed====');
-    if (this.sound != null) {
-      if (this.state.isPlaying) {
-        this.sound.pauseAsync();
-      } else {
-        console.log('=== start playing === ');
-        this.sound.playAsync();
-      }
-    }
-  }
-
-  _onStopPressed() {
-    if (this.sound != null) {
-      this.sound.stopAsync();
-    }
   }
 
   async _resetRecording() {
@@ -289,60 +231,59 @@ export default class Create extends Component {
     }
   }
 
-  async _onConfirmRecording() {
+  async _pauseRecording() {
+    console.log('==== pauseRecording === ');
+    if (this.recording === null || this.recording === undefined) {
+      return;
+    }
     this.startWaiting();
-    // save recording. for now just unload
-    const recordingDuration = this.state.recordingDuration;
-    await this._saveRecording(this.recording.getURI(), recordingDuration);
-    this._resetRecording();
+    try {
+      await this.recording.pauseAsync();
+    } catch(error) {
+      // do something? uh-oh
+    }
+    this.setState({ recordingPaused: true });
+    this.stopWaiting();
+  }
+
+  async _resumeRecording() {
+    console.log('==== resumeRecording ==== ');
+    if (!this.state.recordingPaused || this.recording === null || this.recording === undefined) {
+      return;
+    }
+    await this.recording.startAsync();
+    this.setState({ recordingPaused: false });
+  }
+
+  async _onConfirmRecording() {
+    console.log('==== onConfirmRecording ===');
+    this.startWaiting();
+    this.sceneRecordings.push({
+      sceneId: this.state.scenes[this.state.currentSceneIndex].id,
+      recordingUri: this.recording.getURI(),
+      duration: this.state.recordingDuration
+    });
+    await this._resetRecording();
     if (this.state.currentSceneIndex >= this.state.scenes.length - 1) {
       // transition to home page
       console.log('=== trying to get out ====');
+      await this._saveRecordings();
       this.props.navigation.navigate('Landing');
     } else {
       console.log('=== not trying to get out yet ===');
+      this.startRecording();
       this.setState({ currentSceneIndex: this.state.currentSceneIndex + 1 });
     }
     this.stopWaiting();
   }
 
-  async _saveRecording(uri, duration) {
-    console.log('== about to save', duration);
+  async _saveRecordings() {
+    console.log('== about to save');
     try {
-      await saveSceneRecording(
-        this.state.story.id,
-        this.state.scenes[this.state.currentSceneIndex].id,
-        uri,
-        duration,
-        this.state.currentSceneIndex
-      );
+      await saveStoryRecording(this.sceneRecordings);
+      this.sceneRecordings = [];
     } catch(error) {
-      console.log('Error saving, try again');
-    }
-  }
-
-  _updateScreenForSoundStatus = (status) => {
-    console.log('=== updating for sound status', status);
-    if (status.isLoaded) {
-      console.log('     isLoaded', this);
-      this.setState({
-        soundDuration: status.durationMillis,
-        soundPosition: status.positionMillis,
-        shouldPlay: status.shouldPlay,
-        isPlaying: status.isPlaying,
-        rate: status.rate,
-        isPlaybackAllowed: true
-      });
-    } else {
-      console.log('      not loaded');
-      this.setState({
-        soundDuration: null,
-        soundPosition: null,
-        isPlaybackAllowed: false
-      });
-      if (status.error) {
-        console.log(`FATAL PLAYER ERROR: ${status.error}`);
-      }
+      console.log('Save error', error);
     }
   }
 
@@ -371,16 +312,13 @@ export default class Create extends Component {
       backgroundColor: 'gray',
       opacity: 0.8
     };
-    console.log('=== rendering ==', this.state);
-    const overlayStyle = this.state.isRecording || this.state.hasRecording ? {} : hiddenOverlay;
-    const showRecordingPrompt = !this.state.isRecording && !this.state.hasRecording;
-    const showCancelRecording = this.state.isRecording || this.state.hasRecording;
+    const overlayStyle = this.state.recordingStarted ? {} : hiddenOverlay;
     const imageDimensions = {
       height: Dimensions.get('window').height,
       width: Dimensions.get('window').width
     }
     const backgroundSource = this.state.scenes.length > 0 ? { uri: this.state.scenes[this.state.currentSceneIndex].image } : null;
-    let nextSceneImage = null;
+    let nextSceneImage = require('../../assets/checkmark.png');
     if (this.state.currentSceneIndex < this.state.scenes.length - 1) {
       const nextScene = this.state.scenes[this.state.currentSceneIndex + 1];
       nextSceneImage = { uri: nextScene.image };
@@ -392,38 +330,22 @@ export default class Create extends Component {
           style={[styles.img, imageDimensions]}
           source={backgroundSource}
         >
-          <View style={[styles.imageOverlay, overlayStyle]}>
-            {showCancelRecording &&
-                <TouchableHighlight
-                  onPress={this._resetRecording.bind(this)}
-                  style={styles.cancelButton}
-                >
-                  <Image
-                    source={require('../../assets/close.png')}
-                  />
-                </TouchableHighlight>
-            }
-          </View>
+          <View style={[styles.imageOverlay, overlayStyle]}/>
           <View style={styles.bottomBar}>
-            {showRecordingPrompt &&
+            {!this.state.recordingStarted &&
               <StartRecording
                 onPress={this.startRecording.bind(this)}
               />
             }
-            {this.state.isRecording &&
-              <StopRecording
-                onPress={this.stopRecording.bind(this)}
+            {this.state.recordingStarted &&
+              <RecordingControl
+                onConfirm={this._onConfirmRecording.bind(this)}
+                onPause={this._pauseRecording.bind(this)}
+                onCancel={this.stopRecording.bind(this)}
+                onResume={this._resumeRecording.bind(this)}
+                isPaused={this.state.recordingPaused}
                 recordingDuration={this.state.recordingDuration}
                 nextSceneImage={nextSceneImage}
-              />
-            }
-            {!this.state.isRecording && this.state.hasRecording &&
-              <Playback
-                onPlayPress={this._onPlayPausePressed.bind(this)}
-                onConfirm={this._onConfirmRecording.bind(this)}
-                isPlaying={this.state.isPlaying}
-                recordingDuration={this.state.recordingDuration}
-                playbackDuration={this.state.soundPosition}
               />
             }
           </View>
@@ -460,7 +382,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  stopRecording: {
+  recordingControl: {
     flex: 1,
     backgroundColor: 'transparent',
     flexDirection: 'row',
@@ -468,12 +390,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: 40
   },
-  stopRecordingContainer: {
-    flexDirection: 'row',
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
+  // recordingControlContainer: {
+  //   flexDirection: 'row',
+  //   flex: 1,
+  //   alignItems: 'center',
+  //   justifyContent: 'space-between'
+  // },
   recordingDurationText: {
     color: color('teal', 500),
     width: 200,

@@ -117,11 +117,6 @@ async function setInStorage(key, value) {
 const getUserToken = getFromStorage.bind(null, USER_TOKEN);
 const setUserToken = setInStorage.bind(null, USER_TOKEN);
 
-export async function makeNewStory() {
-  const result = await postRequest('v0/stories/');
-  return result.story;
-}
-
 export async function saveSceneRecording(storyId, sceneId, recordingUri, duration, order) {
   let formData = new FormData();
   let uriParts = recordingUri.split('.');
@@ -146,6 +141,19 @@ export async function getScenes() {
   // filtering by character, randomized
   const result = await getRequest('v0/scenes/?per_page=5');
   return result.scenes;
+}
+
+export async function saveStoryRecording(sceneRecordings) {
+  let formData = new FormData();
+  formData.append('scene_order', sceneRecordings.map(s => s.sceneId));
+  formData.append('durations', sceneRecordings.map(s => s.duration));
+  sceneRecordings.forEach(({ sceneId, recordingUri }) => {
+    formData.append(sceneId, recordingUri);
+  });
+  const result = await postRequest('v0/story_recordings/', formData, {
+    'Content-Type': 'multipart/form-data'
+  });
+  return result;
 }
 
 export async function getStories() {
