@@ -13,7 +13,8 @@ import {
 
 const IMAGES = {
   listen: require('../../assets/listen.png'),
-  create: require('../../assets/record_doggie.png')
+  create: require('../../assets/record_doggie.png'),
+  profile: require('../../assets/profile.png')
 }
 
 const Option = ({onPress, imageSource}) => {
@@ -30,6 +31,14 @@ const Option = ({onPress, imageSource}) => {
 
 export default class Landing extends Component {
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      isLoggedIn: false,
+      user: null
+    };
+  }
+
   onPressList() {
     const { navigate } = this.props.navigation;
     navigate('List');
@@ -40,10 +49,26 @@ export default class Landing extends Component {
     navigate('Create');
   }
 
+  onSubmitLogin(email) {
+    this.setState({ isLoggedIn: true, email });
+  }
+
+  onPressLogin() {
+    const { navigate } = this.props.navigation;
+    if (this.state.isLoggedIn) {
+      console.log('== Got email ===', this.state.user);
+      navigate('Profile', { email: this.state.user.email });
+    } else {
+      navigate('Login', this.onSubmitLogin.bind(this));
+    }
+  }
+
   async componentDidMount() {
     // check if user logged in: if so, navigate to Landing
     this.props.screenProps.showSpinner();
-    const isLoggedIn = await checkLogin();
+    const user = await checkLogin();
+    const isLoggedIn = !!user;
+    this.setState({ user, isLoggedIn });
     if (!isLoggedIn) {
       this.props.navigation.navigate('Login');
     }
@@ -53,6 +78,16 @@ export default class Landing extends Component {
 	render() {
 		return (
 			<View style={styles.container}>
+        <TouchableOpacity
+          onPress={this.onPressLogin.bind(this)}
+          style={styles.login}
+        >
+          <Image
+            source={IMAGES.profile}
+            resizeMode='contain'
+            style={{height: 55, width: 55}}
+          />
+        </TouchableOpacity>
         <View style={styles.options}>
           <Option onPress={this.onPressList.bind(this)} imageSource={IMAGES.listen}/>
           <Option onPress={this.onPressCreate.bind(this)} imageSource={IMAGES.create}/>
@@ -64,13 +99,14 @@ export default class Landing extends Component {
 
 const styles = StyleSheet.create({
 	container: {
-		flex: 1
+		flex: 1,
+    paddingVertical: 10,
+    backgroundColor: color('tan', 100)
 	},
   options: {
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: color('tan', 100),
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -81,5 +117,8 @@ const styles = StyleSheet.create({
   },
   optionImage: {
     width: 300
+  },
+  login: {
+    alignItems: 'center'
   }
 })

@@ -9,6 +9,7 @@ import { StackNavigator } from 'react-navigation';
 import Landing from './app/Containers/Landing';
 import Login from './app/Containers/Login';
 import CreateAccount from './app/Containers/CreateAccount';
+import Profile from './app/Containers/Profile';
 import Create from './app/Containers/Create';
 import List from './app/Containers/List';
 import Story from './app/Containers/Story';
@@ -17,6 +18,7 @@ const Navigator = StackNavigator({
   Landing: { screen: Landing },
   Login: { screen: Login },
   CreateAccount: { screen: CreateAccount },
+  Profile: { screen: Profile },
   Create: { screen: Create },
   List: { screen: List },
   Story: { screen: Story },

@@ -38,7 +38,6 @@ export async function _makeRequest(method, path, body=null, addedHeaders={}) {
     const body = await response.json();
     return body;
   } else {
-    debugger;
     throw new APIError(response);
   }
 }
@@ -58,13 +57,13 @@ class APIError extends Error {
   }
 }
 
-export async function login(username, password) {
+export async function login(email, password) {
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
   const payload = {
     method: 'post',
     headers,
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ email, password })
   };
   const response = await fetch(getUrl('api-token-auth/'), payload);
   if (response.ok) {
@@ -75,13 +74,13 @@ export async function login(username, password) {
   }
 }
 
-export async function register(username, email, pw1, pw2) {
+export async function register(email, pw1, pw2) {
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
   const payload = {
     method: 'post',
     headers,
-    body: JSON.stringify({ username, password1: pw1, password2: pw2, email })
+    body: JSON.stringify({ password1: pw1, password2: pw2, email })
   };
   const response = await fetch(getUrl('rest-auth/registration/'), payload);
   if (response.ok) {
@@ -95,13 +94,17 @@ export async function register(username, email, pw1, pw2) {
 
 export async function checkLogin() {
   try {
-    await getRequest('v0/users/?per_page=1');
+    const result = await getRequest('v0/users/me/');
+    return result.user;
   } catch(error) {
     if (error.isAPIError && error.response.status_code === 401) {
       return false;
     }
   }
-  return true;
+}
+
+export async function logout() {
+  await postRequest('rest-auth/logout/');
 }
 
 async function getFromStorage(key) {
@@ -143,12 +146,22 @@ export async function getScenes() {
   return result.scenes;
 }
 
+function serializeRecording(sceneId, recordingUri) {
+  let uriParts = recordingUri.split('.');
+  let fileType = uriParts[uriParts.length - 1];
+  return {
+    uri: recordingUri,
+    name: `${sceneId}.${fileType}`,
+    type: `audio/x-${fileType}`
+  }
+}
+
 export async function saveStoryRecording(sceneRecordings) {
   let formData = new FormData();
-  formData.append('scene_order', sceneRecordings.map(s => s.sceneId));
-  formData.append('durations', sceneRecordings.map(s => s.duration));
+  formData.append('scene_order', sceneRecordings.map(s => s.sceneId).join());
+  formData.append('durations', sceneRecordings.map(s => s.duration).join());
   sceneRecordings.forEach(({ sceneId, recordingUri }) => {
-    formData.append(sceneId, recordingUri);
+    formData.append(sceneId, serializeRecording(sceneId, recordingUri));
   });
   const result = await postRequest('v0/story_recordings/', formData, {
     'Content-Type': 'multipart/form-data'

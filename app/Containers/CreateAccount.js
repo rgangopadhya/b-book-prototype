@@ -3,35 +3,22 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableHighlight,
+  TouchableOpacity,
   View
 } from 'react-native';
 import {
   register
 } from '../api';
-import { maskPassword } from '../utils/login';
-
-const LoginInput = ({name, onChangeText, value}) => {
-  return (
-    <View>
-      <Text>{name}</Text>
-      <TextInput
-        style={styles.textInput}
-        onChangeText={onChangeText}
-        value={value}
-        autoCorrect={false}
-        autoCapitalize='none'
-      />
-    </View>
-  );
-}
+import RegistrationWrapper from '../Components/RegistrationWrapper';
+import LoginInput from '../Components/LoginInput';
+import Confirm from '../Components/Confirm';
+import Cancel from '../Components/Cancel';
 
 export default class CreateAccount extends Component {
 
   constructor(params) {
     super(params);
     this.state = {
-      username: null,
       email: null,
       password1: null,
       password2: null
@@ -46,7 +33,6 @@ export default class CreateAccount extends Component {
     this.props.screenProps.showSpinner();
     try {
       await register(
-        this.state.username,
         this.state.email,
         this.state.password1,
         this.state.password2
@@ -59,36 +45,49 @@ export default class CreateAccount extends Component {
     this.props.screenProps.hideSpinner();
   }
 
+  _cancelRegistration() {
+    this.props.navigation.navigate('Login');
+  }
+
   render() {
+    const disabled = !this.state.email || !this.state.password1 || !this.state.password2;
     return (
       <View style={styles.container}>
-        <View>
-          <LoginInput
-            name='Email'
-            onChangeText={this._updateKey.bind(this, 'email')}
-            value={this.state.email}
-          />
-          <LoginInput
-            name='Username'
-            onChangeText={this._updateKey.bind(this, 'username')}
-            value={this.state.username}
-          />
-          <LoginInput
-            name='Password'
-            onChangeText={this._updateKey.bind(this, 'password1')}
-            value={maskPassword(this.state.password1)}
-          />
-          <LoginInput
-            name='Enter password again'
-            onChangeText={this._updateKey.bind(this, 'password2')}
-            value={maskPassword(this.state.password2)}
-          />
+        <Text style={styles.title}>Create Account</Text>
+        <RegistrationWrapper>
+          <View style={styles.form}>
+            <LoginInput
+              placeholder='Email'
+              onChange={this._updateKey.bind(this, 'email')}
+              value={this.state.email}
+            />
+            <LoginInput
+              placeholder='Password'
+              onChange={this._updateKey.bind(this, 'password1')}
+              value={this.state.password1}
+              secure={true}
+            />
+            <LoginInput
+              placeholder='Enter password again'
+              onChange={this._updateKey.bind(this, 'password2')}
+              value={this.state.password2}
+              secure={true}
+            />
+          </View>
+        </RegistrationWrapper>
+        <View style={styles.submit}>
+          <View style={{flexDirection: 'row', width: '100%'}}>
+            <Cancel
+              onPress={this._cancelRegistration.bind(this)}
+              size={60}
+            />
+            <Confirm
+              onPress={this._submitRegistration.bind(this)}
+              size={60}
+              disabled={disabled}
+            />
+          </View>
         </View>
-        <TouchableHighlight
-          onPress={this._submitRegistration.bind(this)}
-        >
-          <Text>Submit</Text>
-        </TouchableHighlight>
       </View>
     );
   }
@@ -96,12 +95,22 @@ export default class CreateAccount extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: color('tan', 100)
   },
-  textInput: {
-    width: '100%',
-    borderColor: 'gray',
-    borderWidth: 1,
+  title: {
+    fontSize: 50,
     padding: 10
+  },
+  form: {
+    flex: 1,
+    paddingLeft: 20
+  },
+  submit: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    width: '100%'
   },
 });

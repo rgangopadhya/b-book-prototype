@@ -279,12 +279,14 @@ export default class Create extends Component {
 
   async _saveRecordings() {
     console.log('== about to save');
+    this.startWaiting();
     try {
       await saveStoryRecording(this.sceneRecordings);
       this.sceneRecordings = [];
     } catch(error) {
       console.log('Save error', error);
     }
+    this.stopWaiting();
   }
 
   _updateScreenForRecordingStatus = (status) => {

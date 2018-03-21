@@ -79,7 +79,7 @@ export default class List extends Component {
                       </Text>
                       <View>
                         <Image
-                          source={{uri: item.cover_image}}
+                          source={item.cover_image ? {uri: item.cover_image} : null}
                           style={styles.storyCoverImage}
                           resizeMode='contain'
                         />

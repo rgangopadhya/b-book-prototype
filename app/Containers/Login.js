@@ -1,30 +1,56 @@
 import React, { Component } from 'react';
 import {
+  Image,
   StyleSheet,
   Text,
   TextInput,
-  TouchableHighlight,
+  TouchableOpacity,
   View
 } from 'react-native';
 
 import {
   login
 } from '../api';
-import { maskPassword } from '../utils/login';
+import color from '../utils/colors';
+import RegistrationWrapper from '../Components/RegistrationWrapper';
+import LoginInput from '../Components/LoginInput';
+import Confirm from '../Components/Confirm';
 
+const IMAGES = {
+  profile: require('../../assets/profile.png')
+}
+
+const LoginForm = ({email, onChangeEmail, password, onChangePassword}) => {
+  return (
+    <View style={styles.loginForm}>
+      <LoginInput
+        placeholder='Email'
+        value={email}
+        onChange={onChangeEmail}
+      />
+      <LoginInput
+        placeholder='Password'
+        value={password}
+        secure={true}
+        onChange={onChangePassword}
+      />
+    </View>
+  );
+}
 
 export default class Login extends Component {
 
-  constructor(params) {
-    super(params);
+  constructor(props) {
+    super(props);
     this.state = {
-      username: null,
+      email: null,
       password: null
     };
   }
 
   _submitLogin() {
-    login(this.state.username, this.state.password);
+    login(this.state.email, this.state.password);
+    // should call parent
     this.props.navigation.navigate('Landing');
   }
 
@@ -35,43 +61,30 @@ export default class Login extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <Text>Login</Text>
-        <View style={styles.loginInputContainer}>
-          <Text style={styles.prompt}>Username</Text>
-          <TextInput
-            style={styles.textInput}
-            onChangeText={(text) => this.setState({ username: text })}
-            value={this.state.username}
-            autoCorrect={false}
-            autoCapitalize='none'
-          />
-        </View>
-        <View style={styles.loginInputContainer}>
-          <Text style={styles.prompt}>Password</Text>
-          <TextInput
-            style={styles.textInput}
-            onChangeText={(text) => this.setState({ password: text })}
-            value={maskPassword(this.state.password)}
-            autoCorrect={false}
-            autoCapitalize='none'
-          />
-        </View>
-        <TouchableHighlight
-          onPress={this._submitLogin.bind(this)}
-          style={styles.submitLogin}
-        >
-          <View>
-            <Text>Submit</Text>
-          </View>
-        </TouchableHighlight>
-        <TouchableHighlight
+        <Text style={styles.title}>Login</Text>
+        <TouchableOpacity
           onPress={this._goToCreateAccount.bind(this)}
           style={styles.createAccount}
         >
           <Text style={styles.createAccountText}>
             Don't have an account? Create one
           </Text>
-        </TouchableHighlight>
+        </TouchableOpacity>
+        <RegistrationWrapper>
+          <LoginForm
+            onChangeEmail={(text) => this.setState({ email: text })}
+            email={this.state.email}
+            onChangePassword={(text) => this.setState({ password: text })}
+            password={this.state.password}
+          />
+        </RegistrationWrapper>
+        <View style={styles.submit}>
+          <Confirm
+            size={60}
+            onPress={this._submitLogin.bind(this)}
+            disabled={!this.state.email || !this.state.password}
+          />
+        </View>
       </View>
     );
   }
@@ -81,27 +94,32 @@ export default class Login extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start'
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    backgroundColor: color('tan', 100)
   },
-  loginInputContainer: {
-    flexDirection: 'row',
+  title: {
+    fontSize: 50,
     padding: 10
   },
-  prompt: {
+  loginForm: {
+    flex: 1,
+    paddingLeft: 20
   },
-  textInput: {
-    width: '100%',
-    borderColor: 'gray',
-    borderWidth: 1,
-    padding: 10
+  submit: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    width: '100%'
   },
   createAccount: {
     padding: 20
   },
   createAccountText: {
-    fontSize: 15,
+    fontSize: 25,
     fontStyle: 'italic',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    textDecorationLine: 'underline',
+    color: color('teal', 500)
   },
   submitLogin: {
     padding: 20,
