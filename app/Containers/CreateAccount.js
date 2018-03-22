@@ -11,8 +11,7 @@ import {
 } from '../api';
 import RegistrationWrapper from '../Components/RegistrationWrapper';
 import LoginInput from '../Components/LoginInput';
-import Confirm from '../Components/Confirm';
-import Cancel from '../Components/Cancel';
+import { Confirm, Cancel } from '../Components/Button';
 
 export default class CreateAccount extends Component {
 
@@ -20,6 +19,7 @@ export default class CreateAccount extends Component {
     super(params);
     this.state = {
       email: null,
+      username: null,
       password1: null,
       password2: null
     };
@@ -33,15 +33,16 @@ export default class CreateAccount extends Component {
     this.props.screenProps.showSpinner();
     try {
       await register(
+        this.state.username,
         this.state.email,
         this.state.password1,
         this.state.password2
       );
+      this.props.navigation.navigate('Landing');
     } catch(error) {
       // TODO: show this to user
       console.log('Login error', error);
     }
-    this.props.navigation.navigate('Landing');
     this.props.screenProps.hideSpinner();
   }
 
@@ -50,12 +51,17 @@ export default class CreateAccount extends Component {
   }
 
   render() {
-    const disabled = !this.state.email || !this.state.password1 || !this.state.password2;
+    const disabled = !this.state.email || !this.state.username || !this.state.password1 || !this.state.password2;
     return (
       <View style={styles.container}>
         <Text style={styles.title}>Create Account</Text>
         <RegistrationWrapper>
           <View style={styles.form}>
+            <LoginInput
+              placeholder='Username'
+              onChange={this._updateKey.bind(this, 'username')}
+              value={this.state.username}
+            />
             <LoginInput
               placeholder='Email'
               onChange={this._updateKey.bind(this, 'email')}
@@ -80,10 +86,12 @@ export default class CreateAccount extends Component {
             <Cancel
               onPress={this._cancelRegistration.bind(this)}
               size={60}
+              style={{flex: 1}}
             />
             <Confirm
               onPress={this._submitRegistration.bind(this)}
               size={60}
+              style={{flex: 3}}
               disabled={disabled}
             />
           </View>
@@ -109,7 +117,6 @@ const styles = StyleSheet.create({
     paddingLeft: 20
   },
   submit: {
-    flex: 1,
     justifyContent: 'flex-end',
     width: '100%'
   },

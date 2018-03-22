@@ -14,19 +14,19 @@ import {
 import color from '../utils/colors';
 import RegistrationWrapper from '../Components/RegistrationWrapper';
 import LoginInput from '../Components/LoginInput';
-import Confirm from '../Components/Confirm';
+import { Confirm } from '../Components/Button';
 
 const IMAGES = {
   profile: require('../../assets/profile.png')
 }
 
-const LoginForm = ({email, onChangeEmail, password, onChangePassword}) => {
+const LoginForm = ({username, onChangeUsername, password, onChangePassword}) => {
   return (
     <View style={styles.loginForm}>
       <LoginInput
-        placeholder='Email'
-        value={email}
-        onChange={onChangeEmail}
+        placeholder='Username'
+        value={username}
+        onChange={onChangeUsername}
       />
       <LoginInput
         placeholder='Password'
@@ -43,13 +43,13 @@ export default class Login extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: null,
+      username: null,
       password: null
     };
   }
 
-  _submitLogin() {
-    login(this.state.email, this.state.password);
+ async  _submitLogin() {
+    await login(this.state.username, this.state.password);
     // should call parent
     this.props.navigation.navigate('Landing');
   }
@@ -72,8 +72,8 @@ export default class Login extends Component {
         </TouchableOpacity>
         <RegistrationWrapper>
           <LoginForm
-            onChangeEmail={(text) => this.setState({ email: text })}
-            email={this.state.email}
+            onChangeUsername={(text) => this.setState({ username: text })}
+            username={this.state.username}
             onChangePassword={(text) => this.setState({ password: text })}
             password={this.state.password}
           />
@@ -82,7 +82,8 @@ export default class Login extends Component {
           <Confirm
             size={60}
             onPress={this._submitLogin.bind(this)}
-            disabled={!this.state.email || !this.state.password}
+            disabled={!this.state.username || !this.state.password}
+            style={{width: '100%'}}
           />
         </View>
       </View>

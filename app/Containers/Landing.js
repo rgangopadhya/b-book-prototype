@@ -49,15 +49,10 @@ export default class Landing extends Component {
     navigate('Create');
   }
 
-  onSubmitLogin(email) {
-    this.setState({ isLoggedIn: true, email });
-  }
-
   onPressLogin() {
     const { navigate } = this.props.navigation;
     if (this.state.isLoggedIn) {
-      console.log('== Got email ===', this.state.user);
-      navigate('Profile', { email: this.state.user.email });
+      navigate('Profile', { user: this.state.user });
     } else {
       navigate('Login', this.onSubmitLogin.bind(this));
     }

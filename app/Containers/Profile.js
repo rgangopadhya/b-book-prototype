@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {
   StyleSheet,
   Text,
-  TouchableHighlight,
+  TouchableOpacity,
   View
 } from 'react-native';
 import RegistrationWrapper from '../Components/RegistrationWrapper';
@@ -18,22 +18,22 @@ export default class Profile extends Component {
   }
 
   render() {
-    const { email } = this.props.navigation.state.params;
-    console.log('=== Got props ===', email);
+    const { user } = this.props.navigation.state.params;
     return (
       <View style={styles.container}>
         <RegistrationWrapper>
-          <Text>Logged in as: {email}</Text>
+          <View style={styles.profile}>
+            <Text style={styles.title}>Profile</Text>
+            <Text style={styles.email}>Logged in as: {user.email}</Text>
+          </View>
         </RegistrationWrapper>
         <View style={styles.submit}>
-          <TouchableHighlight
+          <TouchableOpacity
             onPress={this._logOut.bind(this)}
             style={styles.logOut}
           >
-            <View>
-              <Text>Log Out</Text>
-            </View>
-          </TouchableHighlight>
+            <Text style={styles.logOutText}>Log Out</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -43,12 +43,26 @@ export default class Profile extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    paddingVertical: 30,
     backgroundColor: color('tan', 100)
   },
-  submit: {
-
+  profile: {
+    flex: 1
+  },
+  title: {
+    fontSize: 50,
+    padding: 10
+  },
+  email: {
+    fontSize: 30
   },
   logOut: {
-
+    backgroundColor: color('red', 300),
+    padding: 40
+  },
+  logOutText: {
+    fontSize: 50
   }
 })

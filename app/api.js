@@ -38,6 +38,7 @@ export async function _makeRequest(method, path, body=null, addedHeaders={}) {
     const body = await response.json();
     return body;
   } else {
+    console.log('=== error ==', response);
     throw new APIError(response);
   }
 }
@@ -57,13 +58,13 @@ class APIError extends Error {
   }
 }
 
-export async function login(email, password) {
+export async function login(username, password) {
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
   const payload = {
     method: 'post',
     headers,
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({ username, password })
   };
   const response = await fetch(getUrl('api-token-auth/'), payload);
   if (response.ok) {
@@ -74,13 +75,13 @@ export async function login(email, password) {
   }
 }
 
-export async function register(email, pw1, pw2) {
+export async function register(username, email, pw1, pw2) {
   const headers = new Headers();
   headers.append('Content-Type', 'application/json');
   const payload = {
     method: 'post',
     headers,
-    body: JSON.stringify({ password1: pw1, password2: pw2, email })
+    body: JSON.stringify({ username, password1: pw1, password2: pw2, email })
   };
   const response = await fetch(getUrl('rest-auth/registration/'), payload);
   if (response.ok) {
