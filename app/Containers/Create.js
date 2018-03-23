@@ -5,7 +5,7 @@ import {
   ImageBackground,
   StyleSheet,
   Text,
-  TouchableHighlight,
+  TouchableOpacity,
   View
 } from 'react-native';
 import {
@@ -21,6 +21,7 @@ import {
   getScenes,
   saveStoryRecording
 } from '../api';
+import { Confirm, Cancel } from '../Components/Button';
 
 const durationToTime = (durationMillis) => {
   if (!durationMillis) {
@@ -40,7 +41,7 @@ const addLeadingZero = (seconds) => {
 
 const StartRecording = ({onPress}) => {
   return (
-    <TouchableHighlight
+    <TouchableOpacity
       onPress={onPress}
       style={styles.startRecording}
     >
@@ -49,7 +50,7 @@ const StartRecording = ({onPress}) => {
         size={50}
         color='white'
       />
-    </TouchableHighlight>
+    </TouchableOpacity>
   );
 }
 
@@ -60,40 +61,41 @@ const RecordingControl = ({
   const time = durationToTime(recordingDuration);
   return (
     <View style={styles.recordingControl}>
-      <TouchableHighlight
+      <Cancel
         onPress={onCancel}
         style={styles.cancelButton}
-      >
-        <Image
-          source={require('../../assets/close.png')}
-        />
-      </TouchableHighlight>
-      <TouchableHighlight
+        size={45}
+      />
+      <TouchableOpacity
         style={styles.recordingState}
         onPress={isPaused ? onResume: onPause}
       >
-        <View>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
           <Text style={styles.recordingDurationText}>
             {time}
           </Text>
           <Image
             resizeMode='contain'
             source={require('../../assets/wave.png')}
-            style={{height: 30, width: 600}}
+            style={{height: 30, width: 550}}
           />
         </View>
-      </TouchableHighlight>
+      </TouchableOpacity>
       {nextSceneImage &&
-        <TouchableHighlight
-        style={{paddingLeft: 15}}
+        <TouchableOpacity
         onPress={onConfirm}
       >
           <Image
-            resizeMode='contain'
             source={nextSceneImage}
-            style={{height: 170, width: 127}}
+            style={{height: 127, width: 170}}
           />
-        </TouchableHighlight>
+        </TouchableOpacity>
+      }
+      {!nextSceneImage &&
+        <Confirm
+          size={60}
+          onPress={onConfirm}
+        />
       }
     </View>
   );
@@ -320,7 +322,7 @@ export default class Create extends Component {
       width: Dimensions.get('window').width
     }
     const backgroundSource = this.state.scenes.length > 0 ? { uri: this.state.scenes[this.state.currentSceneIndex].image } : null;
-    let nextSceneImage = require('../../assets/checkmark.png');
+    let nextSceneImage = null;
     if (this.state.currentSceneIndex < this.state.scenes.length - 1) {
       const nextScene = this.state.scenes[this.state.currentSceneIndex + 1];
       nextSceneImage = { uri: nextScene.image };
@@ -367,15 +369,12 @@ const styles = StyleSheet.create({
     flex: 1
   },
   imageOverlay: {
-    height: '90%',
+    height: '85%',
     justifyContent: 'flex-start',
     alignItems: 'flex-end'
   },
-  cancelButton: {
-    padding: 20
-  },
   bottomBar: {
-    height: '10%'
+    height: '15%'
   },
   startRecording: {
     flex: 1,
@@ -388,51 +387,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingLeft: 40
+    justifyContent: 'space-between',
+    padding: 10
   },
-  // recordingControlContainer: {
-  //   flexDirection: 'row',
-  //   flex: 1,
-  //   alignItems: 'center',
-  //   justifyContent: 'space-between'
-  // },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: 'transparent'
+  },
+  recordingState: {
+    justifyContent: 'center',
+    paddingHorizontal: 10
+  },
   recordingDurationText: {
     color: color('teal', 500),
-    width: 200,
+    width: 150,
+    paddingHorizontal: 10,
     textAlign: 'center',
     textShadowOffset: { width: 1, height: 1},
-    textShadowColor: '#045384',
-    ...fonts.bold
-  },
-  playback: {
-    flex: 1,
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  playRecording: {
-    flex: 3,
-    padding: 30
-  },
-  playRecordingIn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between'
-  },
-  recordingTimeline: {
-    backgroundColor: color('red', 300),
-    height: 10,
-    shadowOffset: { width: 1, height: 1},
-    shadowColor: 'gray',
-    flex: 1
-  },
-  recordingTimelineTime: {
-    paddingHorizontal: 10,
-    color: color('red', 300),
-    textShadowOffset: { width: 1, height: 1 },
     textShadowColor: '#045384',
     ...fonts.bold
   },

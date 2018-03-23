@@ -20,11 +20,11 @@ function buttonConstructor(source, backgroundColor) {
         key={opacity}
         disabled={disabled}
       >
-        <View style={styles.check}>
+        <View style={[styles.check]}>
           <Image
             resizeMode='contain'
             source={source}
-            style={{height: size}}
+            style={{height: size, width: size}}
           />
         </View>
       </TouchableOpacity>

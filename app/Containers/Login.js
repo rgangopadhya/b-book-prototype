@@ -80,7 +80,7 @@ export default class Login extends Component {
         </RegistrationWrapper>
         <View style={styles.submit}>
           <Confirm
-            size={60}
+            size={75}
             onPress={this._submitLogin.bind(this)}
             disabled={!this.state.username || !this.state.password}
             style={{width: '100%'}}
