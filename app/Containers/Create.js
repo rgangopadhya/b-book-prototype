@@ -22,6 +22,7 @@ import {
   saveStoryRecording
 } from '../api';
 import { Confirm, Cancel } from '../Components/Button';
+import Modal from '../Components/Modal';
 
 const durationToTime = (durationMillis) => {
   if (!durationMillis) {
@@ -95,9 +96,57 @@ const RecordingControl = ({
         <Confirm
           size={60}
           onPress={onConfirm}
+          style={{height: 127, width: 170}}
         />
       }
     </View>
+  );
+}
+
+const CancelModal = ({isVisible, onClose, onCancel}) => {
+  const buttonDim = 0.35 * Dimensions.get('window').width;
+  const buttonDimensions = {
+    height: buttonDim,
+    width: buttonDim
+  };
+  return (
+    <Modal
+      visible={isVisible}
+    >
+      <View style={modalStyle.container}>
+        <View style={modalStyle.buttonWrapper}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={[modalStyle.button, modalStyle.closeButton, buttonDimensions]}
+          >
+            <Image
+              source={require('../../assets/back.png')}
+              resizeMode='contain'
+              style={{height: 90, width: 90}}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={modalStyle.buttonWrapper}>
+          <TouchableOpacity
+            onPress={onCancel}
+            style={[modalStyle.button, modalStyle.cancelButton, buttonDimensions]}
+          >
+            <View style={modalStyle.cancelIcons}>
+              <Image
+                resizeMode='contain'
+                source={require('../../assets/cancel_doggie.png')}
+                style={{position: 'relative', left: buttonDim * 0.15, top: 0}}
+              />
+              <Image
+                resizeMode='contain'
+                source={require('../../assets/black_close.png')}
+                style={{height: 50, width: 50}}
+              />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -116,7 +165,8 @@ export default class Create extends Component {
       recordingDuration: null,
       haveRecordingPermissions: false,
       scenes: [],
-      currentSceneIndex: 0
+      currentSceneIndex: 0,
+      cancelModalVisible: false
     };
   }
 
@@ -203,6 +253,23 @@ export default class Create extends Component {
     } catch (error) {
       console.log('error!!', error);
     }
+  }
+
+  async _showCancelModal() {
+    await this._pauseRecording();
+    this.setState({ cancelModalVisible: true });
+  }
+
+  async _closeCancelModal() {
+    await this._resumeRecording();
+    this.setState({ cancelModalVisible: false });
+  }
+
+  async _cancelRecording() {
+    await this._resetRecording();
+    this.sceneRecordings = [];
+    this.setState({ cancelModalVisible: false });
+    this.props.navigation.navigate('Landing');
   }
 
   async stopRecording() {
@@ -317,7 +384,7 @@ export default class Create extends Component {
       opacity: 0.8
     };
     const overlayStyle = this.state.recordingStarted ? {} : hiddenOverlay;
-    const imageDimensions = {
+    const screenDimensions = {
       height: Dimensions.get('window').height,
       width: Dimensions.get('window').width
     }
@@ -331,7 +398,7 @@ export default class Create extends Component {
       <View style={styles.container}>
         <ImageBackground
           resizeMode='contain'
-          style={[styles.img, imageDimensions]}
+          style={[styles.img, screenDimensions]}
           source={backgroundSource}
         >
           <View style={[styles.imageOverlay, overlayStyle]}/>
@@ -345,7 +412,7 @@ export default class Create extends Component {
               <RecordingControl
                 onConfirm={this._onConfirmRecording.bind(this)}
                 onPause={this._pauseRecording.bind(this)}
-                onCancel={this.stopRecording.bind(this)}
+                onCancel={this._showCancelModal.bind(this)}
                 onResume={this._resumeRecording.bind(this)}
                 isPaused={this.state.recordingPaused}
                 recordingDuration={this.state.recordingDuration}
@@ -354,6 +421,11 @@ export default class Create extends Component {
             }
           </View>
         </ImageBackground>
+        <CancelModal
+          isVisible={this.state.cancelModalVisible}
+          onClose={this._closeCancelModal.bind(this)}
+          onCancel={this._cancelRecording.bind(this)}
+        />
       </View>
     );
   }
@@ -414,4 +486,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20
   },
+});
+
+const modalStyle = StyleSheet.create({
+  container: {
+    flexDirection: 'row'
+  },
+  buttonWrapper: {
+    padding: 20
+  },
+  button: {
+    padding: 50,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  closeButton: {
+    backgroundColor: 'white'
+  },
+  cancelButton: {
+    backgroundColor: color('red', 300)
+  },
+  cancelIcons: {
+    alignItems: 'center',
+    justifyContent: 'flex-end'
+  }
 });

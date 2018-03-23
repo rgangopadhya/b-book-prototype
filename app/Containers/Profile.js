@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import {
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -17,6 +18,11 @@ export default class Profile extends Component {
     navigate('Login');
   }
 
+  _goBack() {
+    const { navigate } = this.props.navigation;
+    navigate('Landing');
+  }
+
   render() {
     const { user } = this.props.navigation.state.params;
     return (
@@ -28,6 +34,15 @@ export default class Profile extends Component {
           </View>
         </RegistrationWrapper>
         <View style={styles.submit}>
+          <TouchableOpacity
+            onPress={this._goBack.bind(this)}
+            style={styles.goBackButton}
+          >
+            <Image
+              source={require('../../assets/back.png')}
+              style={{height: 31, width: 36}}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={this._logOut.bind(this)}
             style={styles.logOut}
@@ -57,6 +72,16 @@ const styles = StyleSheet.create({
   },
   email: {
     fontSize: 30
+  },
+  goBackButton: {
+    padding: 30
+  },
+  submit: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    width: '100%'
   },
   logOut: {
     backgroundColor: color('red', 300),
