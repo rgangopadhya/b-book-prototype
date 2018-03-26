@@ -46,10 +46,9 @@ const StartRecording = ({onPress}) => {
       onPress={onPress}
       style={styles.startRecording}
     >
-      <FontAwesome
-        name='microphone'
-        size={50}
-        color='white'
+      <Image
+        source={require('../../assets/start_record_doggie.png')}
+        style={{height: '100%'}}
       />
     </TouchableOpacity>
   );
@@ -65,21 +64,28 @@ const RecordingControl = ({
       <Cancel
         onPress={onCancel}
         style={styles.cancelButton}
-        size={45}
+        size={35}
       />
       <TouchableOpacity
         style={styles.recordingState}
         onPress={isPaused ? onResume: onPause}
       >
         <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <Text style={styles.recordingDurationText}>
+          <Text style={[styles.recordingDurationText, isPaused ? styles.recordingDurationPaused : {}]}>
             {time}
           </Text>
-          <Image
-            resizeMode='contain'
-            source={require('../../assets/wave.png')}
-            style={{height: 30, width: 550}}
-          />
+          {!isPaused &&
+            <Image
+              resizeMode='contain'
+              source={require('../../assets/wave.png')}
+              style={{height: 30, width: 550}}
+            />
+          }
+          {isPaused &&
+            <View
+              style={{width: 550, height: 10, backgroundColor: color('red', 300)}}
+            />
+          }
         </View>
       </TouchableOpacity>
       {nextSceneImage &&
@@ -103,7 +109,11 @@ const RecordingControl = ({
   );
 }
 
-const CancelModal = ({isVisible, onClose, onCancel}) => {
+const ConfirmActionModal = ({
+  isVisible, onClose, onConfirm,
+  confirmImageSource, confirmIconSource,
+  confirmStyle
+}) => {
   const buttonDim = 0.35 * Dimensions.get('window').width;
   const buttonDimensions = {
     height: buttonDim,
@@ -128,18 +138,18 @@ const CancelModal = ({isVisible, onClose, onCancel}) => {
         </View>
         <View style={modalStyle.buttonWrapper}>
           <TouchableOpacity
-            onPress={onCancel}
-            style={[modalStyle.button, modalStyle.cancelButton, buttonDimensions]}
+            onPress={onConfirm}
+            style={[modalStyle.button, modalStyle.confirmButton, buttonDimensions, confirmStyle]}
           >
-            <View style={modalStyle.cancelIcons}>
+            <View style={modalStyle.confirmIcons}>
               <Image
                 resizeMode='contain'
-                source={require('../../assets/cancel_doggie.png')}
+                source={confirmImageSource}
                 style={{position: 'relative', left: buttonDim * 0.15, top: 0}}
               />
               <Image
                 resizeMode='contain'
-                source={require('../../assets/black_close.png')}
+                source={confirmIconSource}
                 style={{height: 50, width: 50}}
               />
             </View>
@@ -166,8 +176,16 @@ export default class Create extends Component {
       haveRecordingPermissions: false,
       scenes: [],
       currentSceneIndex: 0,
-      cancelModalVisible: false
+      cancelModalVisible: false,
+      confirmModalVisible: false
     };
+  }
+
+  onLastScene() {
+    if (this.state.scenes.length === 0) {
+      return false;
+    }
+    return this.state.currentSceneIndex >= this.state.scenes.length - 1;
   }
 
   async _askForPermissions() {
@@ -324,30 +342,47 @@ export default class Create extends Component {
     this.setState({ recordingPaused: false });
   }
 
-  async _onConfirmRecording() {
-    console.log('==== onConfirmRecording ===');
+  async _showConfirmModal() {
+    await this._pauseRecording();
+    this.setState({ confirmModalVisible: true });
+  }
+
+  async _closeConfirmModal() {
+    await this._resumeRecording();
+    this.setState({ confirmModalVisible: false });
+  }
+
+  async _onFinalConfirmation() {
     this.startWaiting();
-    this.sceneRecordings.push({
-      sceneId: this.state.scenes[this.state.currentSceneIndex].id,
-      recordingUri: this.recording.getURI(),
-      duration: this.state.recordingDuration
-    });
-    await this._resetRecording();
-    if (this.state.currentSceneIndex >= this.state.scenes.length - 1) {
-      // transition to home page
-      console.log('=== trying to get out ====');
-      await this._saveRecordings();
-      this.props.navigation.navigate('Landing');
+    this.setState({ confirmModalVisible: false });
+    await this._saveRecording();
+    await this._persistRecordings();
+    this.props.navigation.navigate('Landing');
+    this.stopWaiting();
+  }
+
+  async _onConfirmRecording() {
+    this.startWaiting();
+    if (this.onLastScene()) {
+      await this._showConfirmModal();
     } else {
-      console.log('=== not trying to get out yet ===');
+      await this._saveRecording();
       this.startRecording();
       this.setState({ currentSceneIndex: this.state.currentSceneIndex + 1 });
     }
     this.stopWaiting();
   }
 
-  async _saveRecordings() {
-    console.log('== about to save');
+  async _saveRecording() {
+    this.sceneRecordings.push({
+      sceneId: this.state.scenes[this.state.currentSceneIndex].id,
+      recordingUri: this.recording.getURI(),
+      duration: this.state.recordingDuration
+    });
+    await this._resetRecording();
+  }
+
+  async _persistRecordings() {
     this.startWaiting();
     try {
       await saveStoryRecording(this.sceneRecordings);
@@ -384,10 +419,8 @@ export default class Create extends Component {
       opacity: 0.8
     };
     const overlayStyle = this.state.recordingStarted ? {} : hiddenOverlay;
-    const screenDimensions = {
-      height: Dimensions.get('window').height,
-      width: Dimensions.get('window').width
-    }
+    const { width, height } = Dimensions.get('window');
+    const screenDimensions = { height, width };
     const backgroundSource = this.state.scenes.length > 0 ? { uri: this.state.scenes[this.state.currentSceneIndex].image } : null;
     let nextSceneImage = null;
     if (this.state.currentSceneIndex < this.state.scenes.length - 1) {
@@ -421,10 +454,20 @@ export default class Create extends Component {
             }
           </View>
         </ImageBackground>
-        <CancelModal
+        <ConfirmActionModal
           isVisible={this.state.cancelModalVisible}
           onClose={this._closeCancelModal.bind(this)}
-          onCancel={this._cancelRecording.bind(this)}
+          onConfirm={this._cancelRecording.bind(this)}
+          confirmImageSource={require('../../assets/cancel_doggie.png')}
+          confirmIconSource={require('../../assets/black_close.png')}
+        />
+        <ConfirmActionModal
+          isVisible={this.state.confirmModalVisible}
+          onClose={this._closeConfirmModal.bind(this)}
+          onConfirm={this._onFinalConfirmation.bind(this)}
+          confirmImageSource={require('../../assets/confirm_doggie.png')}
+          confirmIconSource={require('../../assets/black_close.png')}
+          confirmStyle={{backgroundColor: color('teal', 600)}}
         />
       </View>
     );
@@ -450,17 +493,16 @@ const styles = StyleSheet.create({
   },
   startRecording: {
     flex: 1,
-    backgroundColor: color('teal', 500),
+    backgroundColor: 'white',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center'
   },
   recordingControl: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'white',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10
+    justifyContent: 'space-between'
   },
   cancelButton: {
     flex: 1,
@@ -478,6 +520,9 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1},
     textShadowColor: '#045384',
     ...fonts.bold
+  },
+  recordingDurationPaused: {
+    color: color('red', 300)
   },
   confirmRecording: {
     flex: 1,
@@ -503,10 +548,10 @@ const modalStyle = StyleSheet.create({
   closeButton: {
     backgroundColor: 'white'
   },
-  cancelButton: {
+  confirmButton: {
     backgroundColor: color('red', 300)
   },
-  cancelIcons: {
+  confirmIcons: {
     alignItems: 'center',
     justifyContent: 'flex-end'
   }
