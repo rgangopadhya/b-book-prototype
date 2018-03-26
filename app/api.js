@@ -171,7 +171,7 @@ export async function saveStoryRecording(sceneRecordings) {
 }
 
 export async function getStories() {
-  const result = await getRequest('v0/stories/');
+  const result = await getRequest('v0/stories/?sort[]=-created_at');
   console.log('=== got stories====', result);
   return result.stories;
 }

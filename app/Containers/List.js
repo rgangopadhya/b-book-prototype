@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import {
   FlatList,
   Image,
+  ImageBackground,
   StyleSheet,
   Text,
-  TouchableHighlight,
+  TouchableOpacity,
   View
 } from 'react-native';
 import {
@@ -13,6 +14,7 @@ import {
 import color from '../utils/colors';
 import fonts from '../utils/fonts';
 import moment from 'moment';
+import durationToTime from '../utils/time';
 
 export default class List extends Component {
 
@@ -51,7 +53,7 @@ export default class List extends Component {
   render() {
     return (
       <View style={styles.container}>
-        <TouchableHighlight
+        <TouchableOpacity
           onPress={this.goBack.bind(this)}
           style={styles.goBackButton}
         >
@@ -59,7 +61,7 @@ export default class List extends Component {
             source={require('../../assets/back.png')}
             style={{height: 31, width: 36}}
           />
-        </TouchableHighlight>
+        </TouchableOpacity>
         <View style={styles.stories}>
           {this.state.stories &&
             <FlatList
@@ -68,7 +70,7 @@ export default class List extends Component {
               horizontal={true}
               renderItem={({item}) => {
                 return (
-                  <TouchableHighlight
+                  <TouchableOpacity
                     onPress={() => { this._onSelectStory(item) }}
                     key={item.id}
                     style={styles.storyContainer}
@@ -78,14 +80,41 @@ export default class List extends Component {
                         {moment(item.created_at).format('MMM D, YYYY')}
                       </Text>
                       <View>
-                        <Image
+                        <View style={styles.storyBacking1}>
+                          <Image
+                            source={require('../../assets/backing_1.png')}
+                            style={styles.storyBackingImage1}
+                            resizeMode='contain'
+                          />
+                        </View>
+                        <View style={styles.storyBacking2}>
+                          <Image
+                            source={require('../../assets/backing_2.png')}
+                            style={styles.storyBackingImage2}
+                            resizeMode='contain'
+                          />
+                        </View>
+                        <View style={styles.storyBacking3}>
+                          <Image
+                            source={require('../../assets/backing_3.png')}
+                            style={styles.storyBackingImage3}
+                            resizeMode='contain'
+                          />
+                        </View>
+                        <ImageBackground
                           source={item.cover_image ? {uri: item.cover_image} : null}
                           style={styles.storyCoverImage}
                           resizeMode='contain'
-                        />
+                        >
+                          <View style={styles.storyInfo}>
+                            <Text style={styles.storyDuration}>
+                              {durationToTime(item.duration)}
+                            </Text>
+                          </View>
+                        </ImageBackground>
                       </View>
                     </View>
-                  </TouchableHighlight>
+                  </TouchableOpacity>
                 );
               }}
             />
@@ -107,6 +136,7 @@ const styles = StyleSheet.create({
   storyContainer: {
     flex: 1,
     padding: 20,
+    paddingVertical: 50,
     justifyContent: 'center'
   },
   goBackButton: {
@@ -125,8 +155,41 @@ const styles = StyleSheet.create({
   storyCoverImage: {
     width: 333,
     height: 250,
-    shadowOffset: { width: 10, height: 10 },
-    shadowColor: color('tan', 50),
-    shadowOpacity: 1
+    justifyContent: 'flex-end'
+  },
+  storyBacking1: {
+    position: 'absolute',
+    left: 0,
+    top: -5
+  },
+  storyBackingImage1: {
+    width: 370,
+    height: 300
+  },
+  storyBacking2: {
+    position: 'absolute',
+    left: -10,
+    top: -10
+  },
+  storyBackingImage2: {
+    width: 362,
+    height: 280
+  },
+  storyBacking3: {
+    position: 'absolute',
+    left: -10,
+    top: -10
+  },
+  storyBackingImage3: {
+    width: 362,
+    height: 280
+  },
+  storyInfo: {
+    alignItems: 'flex-start',
+    backgroundColor: 'transparent'
+  },
+  storyDuration: {
+    ...fonts.bold,
+    fontSize: 16
   }
 });
