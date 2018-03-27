@@ -9,7 +9,11 @@ const colorMap = {
     200: '#F0C792'
   },
   'red': {
+    100: '#FFE3E3',
     300: '#ED7461'
+  },
+  'gray': {
+    200: '#DEDEDE'
   }
 }
 
