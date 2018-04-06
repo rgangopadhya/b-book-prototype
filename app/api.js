@@ -121,6 +121,17 @@ async function setInStorage(key, value) {
 const getUserToken = getFromStorage.bind(null, USER_TOKEN);
 const setUserToken = setInStorage.bind(null, USER_TOKEN);
 
+export async function getCharacters() {
+  const result = await getRequest('v0/characters/');
+  return result.characters;
+}
+
+export async function getScenesForCharacter(characterId) {
+  const url = `v0/scenes/?filter{character}=${characterId}&random=5`;
+  const result = await getRequest(url);
+  return result.scenes;
+}
+
 export async function saveSceneRecording(storyId, sceneId, recordingUri, duration, order) {
   let formData = new FormData();
   let uriParts = recordingUri.split('.');

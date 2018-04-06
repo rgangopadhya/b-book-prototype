@@ -10,6 +10,7 @@ import Landing from './app/Containers/Landing';
 import Login from './app/Containers/Login';
 import CreateAccount from './app/Containers/CreateAccount';
 import Profile from './app/Containers/Profile';
+import SelectCharacter from './app/Containers/SelectCharacter';
 import Create from './app/Containers/Create';
 import List from './app/Containers/List';
 import Story from './app/Containers/Story';
@@ -19,6 +20,7 @@ const Navigator = StackNavigator({
   Login: { screen: Login },
   CreateAccount: { screen: CreateAccount },
   Profile: { screen: Profile },
+  SelectCharacter: { screen: SelectCharacter },
   Create: { screen: Create },
   List: { screen: List },
   Story: { screen: Story },

@@ -46,7 +46,7 @@ export default class Landing extends Component {
 
   onPressCreate() {
     const { navigate } = this.props.navigation;
-    navigate('Create');
+    navigate('SelectCharacter');
   }
 
   onPressLogin() {
@@ -54,7 +54,7 @@ export default class Landing extends Component {
     if (this.state.isLoggedIn) {
       navigate('Profile', { user: this.state.user });
     } else {
-      navigate('Login', this.onSubmitLogin.bind(this));
+      navigate('Login');
     }
   }
 

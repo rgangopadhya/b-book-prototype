@@ -159,7 +159,8 @@ export default class Create extends Component {
       currentImage: null,
       recordingDuration: null,
       haveRecordingPermissions: false,
-      scenes: [],
+      character: this.props.navigation.params.character,
+      scenes: this.props.navigation.state.params.scenes,
       currentSceneIndex: 0,
       cancelModalVisible: false,
       confirmModalVisible: false
@@ -189,7 +190,7 @@ export default class Create extends Component {
 
   componentDidMount() {
     this._askForPermissions();
-    this._loadScenes();
+    // this._loadScenes();
   }
 
   async componentWillUnmount() {
