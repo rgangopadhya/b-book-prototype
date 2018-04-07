@@ -117,6 +117,17 @@ export default class SelectCharacter extends Component {
     this.stopWaiting();
   }
 
+  async _shuffle() {
+    this.startWaiting();
+    const character = this.state.selectedCharacter;
+    const scenes = await getScenesForCharacter(character.id);
+    await this._prefetchImages(scenes);
+    this.setState({
+      scenesForSelectedCharacter: scenes
+    });
+    this.stopWaiting();
+  }
+
   async _prefetchImages(scenes) {
     await Promise.all(scenes.map((scene) => {
       return Image.prefetch(scene.image);
@@ -148,6 +159,15 @@ export default class SelectCharacter extends Component {
           onPick={this._onPickCharacter.bind(this)}
         />
         <View style={styles.sceneSelect}>
+          <TouchableOpacity
+            onPress={this._shuffle.bind(this)}
+            style={{backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', height: 127, width: 170}}
+          >
+            <Image
+              source={require('../../assets/shuffle.png')}
+              style={{height: 56, width: 99}}
+            />
+          </TouchableOpacity>
           <SceneList
             scenes={this.state.scenesForSelectedCharacter}
           />

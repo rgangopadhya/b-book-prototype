@@ -85,7 +85,7 @@ const RecordingControl = ({
       }
       {!nextSceneImage &&
         <Confirm
-          size={60}
+          size={55}
           onPress={onConfirm}
           style={{height: 127, width: 170}}
         />
@@ -181,16 +181,8 @@ export default class Create extends Component {
     });
   }
 
-  async _loadScenes() {
-    this.startWaiting();
-    const scenes = await getScenes();
-    this.setState({ scenes });
-    this.stopWaiting();
-  }
-
   componentDidMount() {
     this._askForPermissions();
-    // this._loadScenes();
   }
 
   async componentWillUnmount() {
@@ -354,7 +346,10 @@ export default class Create extends Component {
     } else {
       await this._saveRecording();
       this.startRecording();
-      this.setState({ currentSceneIndex: this.state.currentSceneIndex + 1 });
+      this.setState({
+        currentSceneIndex: this.state.currentSceneIndex + 1,
+        recordingPaused: false
+      });
     }
     this.stopWaiting();
   }
@@ -452,7 +447,7 @@ export default class Create extends Component {
           onClose={this._closeConfirmModal.bind(this)}
           onConfirm={this._onFinalConfirmation.bind(this)}
           confirmImageSource={require('../../assets/confirm_doggie.png')}
-          confirmIconSource={require('../../assets/black_close.png')}
+          confirmIconSource={require('../../assets/checkmark.png')}
           confirmStyle={{backgroundColor: color('teal', 600)}}
         />
       </View>
