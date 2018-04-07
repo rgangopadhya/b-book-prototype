@@ -159,7 +159,7 @@ export default class Create extends Component {
       currentImage: null,
       recordingDuration: null,
       haveRecordingPermissions: false,
-      character: this.props.navigation.params.character,
+      character: this.props.navigation.state.params.character,
       scenes: this.props.navigation.state.params.scenes,
       currentSceneIndex: 0,
       cancelModalVisible: false,
@@ -371,7 +371,7 @@ export default class Create extends Component {
   async _persistRecordings() {
     this.startWaiting();
     try {
-      await saveStoryRecording(this.sceneRecordings);
+      await saveStoryRecording(this.sceneRecordings, this.state.character);
       this.sceneRecordings = [];
     } catch(error) {
       console.log('Save error', error);

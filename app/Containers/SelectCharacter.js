@@ -13,21 +13,20 @@ import {
 import color from '../utils/colors';
 
 const Character = ({character, onPick}) => {
-  console.log('=== rendering char', character);
   return (
     <TouchableOpacity
       onPress={onPick}
     >
       <Image
         source={{uri: character.image}}
-        style={{height: 537, width: 252}}
+        style={{height: 537, width: 485}}
+        resizeMode='contain'
       />
     </TouchableOpacity>
   );
 };
 
 const CharacterPicker = ({characters, onPick}) => {
-  console.log('=== Got characters', characters);
   return (
     <ScrollView
       horizontal={true}
@@ -101,6 +100,11 @@ export default class SelectCharacter extends Component {
 
   async _onPickCharacter(character) {
     this.startWaiting();
+    if (this.state.selectedCharacter && this.state.selectedCharacter.id === character.id) {
+      this._onConfirmSelection();
+      this.stopWaiting();
+      return;
+    }
     this.setState({
       scenesForSelectedCharacter: [],
       selectedCharacter: character
@@ -123,7 +127,7 @@ export default class SelectCharacter extends Component {
     if (!this.state.selectedCharacter || this.state.scenesForSelectedCharacter.length === 0) {
       return;
     }
-    this.props.navigation.navigate('Create', { character, scenes: this.state.scenesForSelectedCharacter });
+    this.props.navigation.navigate('Create', { character: this.state.selectedCharacter, scenes: this.state.scenesForSelectedCharacter });
   }
 
   render() {
@@ -143,9 +147,11 @@ export default class SelectCharacter extends Component {
           selectedCharacter={this.state.selectedCharacter}
           onPick={this._onPickCharacter.bind(this)}
         />
-        <SceneList
-          scenes={this.state.scenesForSelectedCharacter}
-        />
+        <View style={styles.sceneSelect}>
+          <SceneList
+            scenes={this.state.scenesForSelectedCharacter}
+          />
+        </View>
       </View>
     );
   }
@@ -159,8 +165,13 @@ const styles = StyleSheet.create({
   goBackButton: {
     padding: 30
   },
-  sceneList: {
+  sceneSelect: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end'
+  },
+  sceneList: {
     flexDirection: 'row'
   },
   scene: {

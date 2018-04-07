@@ -168,10 +168,11 @@ function serializeRecording(sceneId, recordingUri) {
   }
 }
 
-export async function saveStoryRecording(sceneRecordings) {
+export async function saveStoryRecording(sceneRecordings, character) {
   let formData = new FormData();
   formData.append('scene_order', sceneRecordings.map(s => s.sceneId).join());
   formData.append('durations', sceneRecordings.map(s => s.duration).join());
+  formData.append('character', character.id);
   sceneRecordings.forEach(({ sceneId, recordingUri }) => {
     formData.append(sceneId, serializeRecording(sceneId, recordingUri));
   });
