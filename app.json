@@ -16,7 +16,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bbook.bottomlessbook"
+      "bundleIdentifier": "com.bbook.bottomlessbook",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.bbook.bottomlessbook"
