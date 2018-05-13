@@ -14,6 +14,7 @@ import SelectCharacter from './app/Containers/SelectCharacter';
 import Create from './app/Containers/Create';
 import List from './app/Containers/List';
 import Story from './app/Containers/Story';
+import ErrorNotification from './app/Components/ErrorNotification';
 
 const Navigator = StackNavigator({
   Landing: { screen: Landing },
@@ -43,7 +44,10 @@ export default class App extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      isWaiting: false
+      isWaiting: false,
+      errorModalVisible: false,
+      errorTitle: null,
+      errorMessage: null
     };
   }
 
@@ -55,10 +59,27 @@ export default class App extends React.Component {
     this.setState({ isWaiting: false });
   }
 
+  showError(title, message) {
+    this.setState({
+      errorModalVisible: true,
+      errorTitle: title,
+      errorMessage: message
+    });
+  }
+
+  hideError() {
+    this.setState({
+      errorModalVisible: false,
+      errorTitle: null,
+      errorMessage: null
+    });
+  }
+
   render() {
     const screenProps = {
       showSpinner: this.showSpinner.bind(this),
-      hideSpinner: this.hideSpinner.bind(this)
+      hideSpinner: this.hideSpinner.bind(this),
+      showError: this.showError.bind(this)
     };
     return (
       <View style={{flex: 1}}>
@@ -66,6 +87,12 @@ export default class App extends React.Component {
           screenProps={screenProps}
         />
         <LoadingSpinner isVisible={this.state.isWaiting}/>
+        <ErrorNotification
+          title={this.state.errorTitle}
+          message={this.state.errorMessage}
+          visible={this.state.errorModalVisible}
+          onPress={this.hideError.bind(this)}
+        />
       </View>
     );
   }

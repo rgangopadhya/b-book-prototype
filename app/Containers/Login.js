@@ -48,10 +48,28 @@ export default class Login extends Component {
     };
   }
 
- async  _submitLogin() {
-    await login(this.state.username, this.state.password);
-    // should call parent
-    this.props.navigation.navigate('Landing');
+  startWaiting() {
+    this.props.screenProps.showSpinner();
+  }
+
+  stopWaiting() {
+    this.props.screenProps.hideSpinner();
+  }
+
+  async _submitLogin() {
+    this.startWaiting();
+    try {
+      await login(this.state.username, this.state.password);
+      // should call parent
+      this.props.navigation.navigate('Landing');
+    } catch(error) {
+      this.props.screenProps.showError(
+        'Login Error',
+        'Failed to Login! Unrecognized username/password combination. Please try again.'
+      );
+    } finally {
+      this.stopWaiting();
+    }
   }
 
   _goToCreateAccount() {
