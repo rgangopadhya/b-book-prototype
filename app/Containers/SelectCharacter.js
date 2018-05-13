@@ -54,14 +54,17 @@ const Scene = ({sceneUrl}) => {
   );
 }
 
-const SceneList = ({scenes}) => {
+const SceneList = ({scenes, onPress}) => {
   return (
-    <View style={styles.sceneList}>
+    <TouchableOpacity
+      style={styles.sceneList}
+      onPress={() => { onPress(null) }}
+    >
       {scenes.map((scene) => {
           return <Scene sceneUrl={scene.image} key={scene.id}/>;
         }
       )}
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -100,7 +103,7 @@ export default class SelectCharacter extends Component {
 
   async _onPickCharacter(character) {
     this.startWaiting();
-    if (this.state.selectedCharacter && this.state.selectedCharacter.id === character.id) {
+    if (this.state.selectedCharacter && (character === null || this.state.selectedCharacter.id === character.id)) {
       this._onConfirmSelection();
       this.stopWaiting();
       return;
@@ -170,6 +173,7 @@ export default class SelectCharacter extends Component {
           </TouchableOpacity>
           <SceneList
             scenes={this.state.scenesForSelectedCharacter}
+            onPress={this._onPickCharacter.bind(this)}
           />
         </View>
       </View>
@@ -180,7 +184,7 @@ export default class SelectCharacter extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color('tan', 200)
+    backgroundColor: color('orange', 500)
   },
   goBackButton: {
     padding: 30

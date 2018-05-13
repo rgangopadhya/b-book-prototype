@@ -114,7 +114,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   optionImage: {
-    width: 300
   },
   login: {
     alignItems: 'center',
