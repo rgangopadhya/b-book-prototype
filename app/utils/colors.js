@@ -12,6 +12,12 @@ const colorMap = {
     100: '#FFE3E3',
     300: '#ED7461'
   },
+  'orange': {
+    500: '#F5A623'
+  },
+  'blue': {
+    500: '#4A90E2'
+  },
   'gray': {
     200: '#DEDEDE'
   }

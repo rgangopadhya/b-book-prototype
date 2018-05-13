@@ -334,9 +334,17 @@ export default class Create extends Component {
     this.startWaiting();
     this.setState({ confirmModalVisible: false });
     await this._saveRecording();
-    await this._persistRecordings();
-    this.props.navigation.navigate('Landing');
-    this.stopWaiting();
+    try {
+      await this._persistRecordings();
+      this.props.navigation.navigate('Landing');
+    } catch(error) {
+      this.props.screenProps.showError(
+        'Save Error',
+        'Failed to save! Please try again.'
+      );
+    } finally {
+      this.stopWaiting();
+    }
   }
 
   async _onConfirmRecording() {
@@ -355,11 +363,14 @@ export default class Create extends Component {
   }
 
   async _saveRecording() {
-    this.sceneRecordings.push({
-      sceneId: this.state.scenes[this.state.currentSceneIndex].id,
-      recordingUri: this.recording.getURI(),
-      duration: this.state.recordingDuration
-    });
+    // only save recording if we havent already
+    if (this.state.currentSceneIndex <= 4) {
+      this.sceneRecordings.push({
+        sceneId: this.state.scenes[this.state.currentSceneIndex].id,
+        recordingUri: this.recording.getURI(),
+        duration: this.state.recordingDuration
+      });
+    }
     await this._resetRecording();
   }
 

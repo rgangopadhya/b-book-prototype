@@ -40,10 +40,10 @@ export default class CreateAccount extends Component {
       );
       this.props.navigation.navigate('Landing');
     } catch(error) {
-      // TODO: show this to user
-      console.log('Login error', error);
+      this.props.screenProps.showError('Invalid login', 'Try a more complicated password');
+    } finally {
+      this.props.screenProps.hideSpinner();
     }
-    this.props.screenProps.hideSpinner();
   }
 
   _cancelRegistration() {
