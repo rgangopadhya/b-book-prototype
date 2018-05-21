@@ -11,15 +11,18 @@ import {
   getScenesForCharacter
 } from '../api';
 import color from '../utils/colors';
+import { ResponsiveImage, ResponsiveButton } from '../Components/Responsive';
 
 const Character = ({character, onPick}) => {
   return (
     <TouchableOpacity
       onPress={onPick}
+      style={styles.character}
     >
-      <Image
+      <ResponsiveImage
         source={{uri: character.image}}
-        style={{height: 537, width: 485}}
+        baseHeight={537}
+        baseWidth={485}
         resizeMode='contain'
       />
     </TouchableOpacity>
@@ -30,6 +33,7 @@ const CharacterPicker = ({characters, onPick}) => {
   return (
     <ScrollView
       horizontal={true}
+      contentContainerStyle={styles.characterPicker}
     >
       {characters.map((item) => {
         return (
@@ -46,9 +50,11 @@ const CharacterPicker = ({characters, onPick}) => {
 
 const Scene = ({sceneUrl}) => {
   return (
-    <Image
+    <ResponsiveImage
       source={{uri: sceneUrl}}
-      style={{height: 127, width: 170}}
+      style={styles.scene}
+      baseHeight={127}
+      baseWidth={170}
       key={sceneUrl}
     />
   );
@@ -162,15 +168,18 @@ export default class SelectCharacter extends Component {
           onPick={this._onPickCharacter.bind(this)}
         />
         <View style={styles.sceneSelect}>
-          <TouchableOpacity
+          <ResponsiveButton
             onPress={this._shuffle.bind(this)}
-            style={{backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', height: 127, width: 170}}
+            style={{backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', flex: 1}}
+            baseHeight={127}
+            baseWidth={170}
           >
-            <Image
+            <ResponsiveImage
               source={require('../../assets/shuffle.png')}
-              style={{height: 56, width: 99}}
+              baseHeight={56}
+              baseWidth={99}
             />
-          </TouchableOpacity>
+          </ResponsiveButton>
           <SceneList
             scenes={this.state.scenesForSelectedCharacter}
             onPress={this._onPickCharacter.bind(this)}
@@ -189,6 +198,14 @@ const styles = StyleSheet.create({
   goBackButton: {
     padding: 30
   },
+  characterPicker: {
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  character: {
+    paddingHorizontal: 20
+  },
   sceneSelect: {
     flex: 1,
     flexDirection: 'row',
@@ -199,6 +216,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   scene: {
-
+    paddingHorizontal: 1
   }
 });
