@@ -161,6 +161,8 @@ export default class Create extends Component {
     this.state = {
       isLoading: false,
       recordingStarted: false,
+      isCountingDown: false,
+      countDown: null,
       hasRecording: false,
       isRecording: false,
       recordingPaused: false,
@@ -215,10 +217,33 @@ export default class Create extends Component {
     this.props.screenProps.hideSpinner();
   }
 
+  _startCountDown() {
+    return new Promise((resolve) => {
+      this.setState({ countDown: 3, isCountingDown: true });
+      this.countDownTimeoutId = setInterval(() => {
+        const count = this.state.countDown;
+        if (count <= 0) {
+          clearInterval(this.countDownTimeoutId);
+          this.setState({
+            countDown: null,
+            isCountingDown: false
+          });
+          resolve();
+          return;
+        }
+        this.setState({ countDown: count - 1 });
+      }, 1000);
+    });
+  }
+
+  async _startFirstRecording() {
+    await this._startCountDown();
+    this.startRecording();
+  }
+
   async startRecording() {
     console.log('=== startRecording ====');
     this.sound = null;
-    this.startWaiting();
     console.log('.   setState');
     await Audio.setAudioModeAsync({
       allowsRecordingIOS: true,
@@ -251,9 +276,8 @@ export default class Create extends Component {
       console.log('.   prepareToRecordAsync');
       recording.setOnRecordingStatusUpdate(this._updateScreenForRecordingStatus);
       await this.recording.startAsync();
-      this.setState({ recordingStarted: true });
-      this.stopWaiting();
       console.log('.   recording.startAsync');
+      this.setState({ recordingStarted: true });
     } catch (error) {
       console.log('error!!', error);
     }
@@ -419,8 +443,8 @@ export default class Create extends Component {
 
   render() {
     const hiddenOverlay = {
-      backgroundColor: 'gray',
-      opacity: 0.8
+      backgroundColor: '#424242',
+      opacity: 0.95
     };
     const overlayStyle = this.state.recordingStarted ? {} : hiddenOverlay;
     const { width, height } = Dimensions.get('window');
@@ -431,6 +455,7 @@ export default class Create extends Component {
       const nextScene = this.state.scenes[this.state.currentSceneIndex + 1];
       nextSceneImage = { uri: nextScene.image };
     }
+    console.log('==Counting down', this.state.isCountingDown, this.state.countDown);
     return (
       <View style={styles.container}>
         <ImageBackground
@@ -438,12 +463,16 @@ export default class Create extends Component {
           style={[styles.img, screenDimensions]}
           source={backgroundSource}
         >
-          <View style={[styles.imageOverlay, overlayStyle]}/>
+          <View style={[styles.imageOverlay, overlayStyle]}>
+            {this.state.isCountingDown &&
+              <Text style={styles.countDownText}>{this.state.countDown}</Text>
+            }
+          </View>
           <View style={styles.bottomBar}>
             {!this.state.recordingStarted &&
               <StartRecording
                 onCancel={this._backToSelection.bind(this)}
-                onConfirm={this.startRecording.bind(this)}
+                onConfirm={this._startFirstRecording.bind(this)}
               />
             }
             {this.state.recordingStarted &&
@@ -490,8 +519,13 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     height: '85%',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end'
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  countDownText: {
+    fontSize: 300,
+    textAlign: 'center',
+    color: 'white'
   },
   bottomBar: {
     height: '15%'
