@@ -21,8 +21,8 @@ const Character = ({character, onPick}) => {
     >
       <ResponsiveImage
         source={{uri: character.image}}
-        baseHeight={537}
-        baseWidth={485}
+        baseHeight={512}
+        baseWidth={345}
         resizeMode='contain'
       />
     </TouchableOpacity>
@@ -216,6 +216,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row'
   },
   scene: {
-    paddingHorizontal: 1
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
+    borderColor: 'white'
   }
 });

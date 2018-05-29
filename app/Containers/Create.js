@@ -25,17 +25,25 @@ import { Confirm, Cancel } from '../Components/Button';
 import Modal from '../Components/Modal';
 import durationToTime from '../utils/time';
 
-const StartRecording = ({onPress}) => {
+const StartRecording = ({onConfirm, onCancel}) => {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.startRecording}
-    >
-      <Image
-        source={require('../../assets/start_record_doggie.png')}
-        style={{height: '100%'}}
+    <View style={styles.startRecording}>
+      <Cancel
+        onPress={onCancel}
+        style={styles.cancelButton}
+        size={50}
       />
-    </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onConfirm}
+        style={styles.startRecordingButton}
+      >
+        <Image
+          source={require('../../assets/start_record_doggie.png')}
+          style={{height: '100%'}}
+          resizeMode='contain'
+        />
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -251,6 +259,10 @@ export default class Create extends Component {
     }
   }
 
+  _backToSelection() {
+    this.props.navigation.goBack();
+  }
+
   async _showCancelModal() {
     await this._pauseRecording();
     this.setState({ cancelModalVisible: true });
@@ -430,7 +442,8 @@ export default class Create extends Component {
           <View style={styles.bottomBar}>
             {!this.state.recordingStarted &&
               <StartRecording
-                onPress={this.startRecording.bind(this)}
+                onCancel={this._backToSelection.bind(this)}
+                onConfirm={this.startRecording.bind(this)}
               />
             }
             {this.state.recordingStarted &&
@@ -485,8 +498,13 @@ const styles = StyleSheet.create({
   },
   startRecording: {
     flex: 1,
-    backgroundColor: 'white',
     flexDirection: 'row',
+    height: '100%',
+    alignItems: 'center'
+  },
+  startRecordingButton: {
+    flex: 3,
+    backgroundColor: color('teal', 500),
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -498,7 +516,8 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    backgroundColor: 'transparent'
+    height: '100%',
+    justifyContent: 'center'
   },
   recordingState: {
     justifyContent: 'center',

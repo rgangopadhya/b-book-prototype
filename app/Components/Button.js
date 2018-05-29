@@ -8,7 +8,7 @@ import {
 import color from '../utils/colors';
 
 const checkMark = require('../../assets/checkmark.png');
-const cancel = require('../../assets/close.png');
+const cancel = require('../../assets/black_close.png');
 
 function buttonConstructor(source, backgroundColor) {
   const button = ({ onPress, size, disabled, style }) => {
@@ -44,5 +44,5 @@ const styles = StyleSheet.create({
 });
 
 export const Confirm = buttonConstructor(checkMark, color('teal', 500));
-export const Cancel = buttonConstructor(cancel, 'white');
+export const Cancel = buttonConstructor(cancel, color('red', 300));
 
