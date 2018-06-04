@@ -6,12 +6,13 @@ import {
   View
 } from 'react-native';
 import color from '../utils/colors';
+import { ResponsiveImage } from './Responsive';
 
 const checkMark = require('../../assets/checkmark.png');
 const cancel = require('../../assets/black_close.png');
 
 function buttonConstructor(source, backgroundColor) {
-  const button = ({ onPress, size, disabled, style }) => {
+  const button = ({ onPress, disabled, style, baseHeight, baseWidth }) => {
     const opacity = disabled ? 0.2 : 1.0;
     return (
       <TouchableOpacity
@@ -21,10 +22,11 @@ function buttonConstructor(source, backgroundColor) {
         disabled={disabled}
       >
         <View style={[styles.check]}>
-          <Image
+          <ResponsiveImage
             resizeMode='contain'
             source={source}
-            style={{height: size, width: size}}
+            baseWidth={baseWidth}
+            baseHeight={baseHeight}
           />
         </View>
       </TouchableOpacity>

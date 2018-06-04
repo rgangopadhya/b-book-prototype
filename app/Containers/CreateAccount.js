@@ -85,12 +85,14 @@ export default class CreateAccount extends Component {
           <View style={{flexDirection: 'row', width: '100%'}}>
             <Cancel
               onPress={this._cancelRegistration.bind(this)}
-              size={60}
+              baseWidth={50}
+              baseHeight={50}
               style={{flex: 1}}
             />
             <Confirm
               onPress={this._submitRegistration.bind(this)}
-              size={60}
+              baseWidth={60}
+              baseHeight={60}
               style={{flex: 3}}
               disabled={disabled}
             />

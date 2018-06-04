@@ -23,6 +23,7 @@ import {
 } from '../api';
 import { Confirm, Cancel } from '../Components/Button';
 import Modal from '../Components/Modal';
+import { ResponsiveImage } from '../Components/Responsive';
 import durationToTime from '../utils/time';
 
 const StartRecording = ({onConfirm, onCancel}) => {
@@ -31,7 +32,8 @@ const StartRecording = ({onConfirm, onCancel}) => {
       <Cancel
         onPress={onCancel}
         style={styles.cancelButton}
-        size={50}
+        baseWidth={40}
+        baseHeight={40}
       />
       <TouchableOpacity
         onPress={onConfirm}
@@ -57,7 +59,8 @@ const RecordingControl = ({
       <Cancel
         onPress={onCancel}
         style={styles.cancelButton}
-        size={35}
+        baseWidth={35}
+        baseHeight={35}
       />
       <TouchableOpacity
         style={styles.recordingState}
@@ -85,17 +88,19 @@ const RecordingControl = ({
         <TouchableOpacity
         onPress={onConfirm}
       >
-          <Image
+          <ResponsiveImage
             source={nextSceneImage}
-            style={{height: 127, width: 170}}
+            baseWidth={170}
+            baseHeight={127}
           />
         </TouchableOpacity>
       }
       {!nextSceneImage &&
         <Confirm
-          size={55}
           onPress={onConfirm}
-          style={{height: 127, width: 170}}
+          style={{ height: '100%', minWidth: 170 }}
+          baseHeight={55}
+          baseWidth={55}
         />
       }
     </View>
@@ -537,7 +542,7 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   startRecordingButton: {
-    flex: 3,
+    flex: 4,
     backgroundColor: color('teal', 500),
     justifyContent: 'center',
     alignItems: 'center'
@@ -554,6 +559,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center'
   },
   recordingState: {
+    flex: 4,
     justifyContent: 'center',
     paddingHorizontal: 10
   },

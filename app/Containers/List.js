@@ -128,7 +128,7 @@ export default class List extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color('tan', 200),
+    backgroundColor: color('blue', 500),
   },
   stories: {
     paddingHorizontal: 100
