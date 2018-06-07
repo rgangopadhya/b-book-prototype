@@ -25,6 +25,7 @@ import { Confirm, Cancel } from '../Components/Button';
 import Modal from '../Components/Modal';
 import { ResponsiveImage } from '../Components/Responsive';
 import durationToTime from '../utils/time';
+import { startRecording as startRecordingUtil } from '../utils/recording';
 
 const StartRecording = ({onConfirm, onCancel}) => {
   return (
@@ -247,45 +248,54 @@ export default class Create extends Component {
   }
 
   async startRecording() {
-    console.log('=== startRecording ====');
     this.sound = null;
-    console.log('.   setState');
-    await Audio.setAudioModeAsync({
-      allowsRecordingIOS: true,
-      interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
-      interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-    });
-    console.log('.  setAudioModeAsync');
     if (this.recording !== null && this.recording !== undefined) {
       this.recording.setOnRecordingStatusUpdate(null);
       this.recording = null;
     }
+    await startRecordingUtil(
+      (recording) => { this.recording = recording; },
+      () => this.setState({ recordingStarted: true }),
+      this._updateScreenForRecordingStatus
+    );
+    // console.log('=== startRecording ====');
+    // console.log('.   setState');
+    // await Audio.setAudioModeAsync({
+    //   allowsRecordingIOS: true,
+    //   interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+    //   playsInSilentModeIOS: true,
+    //   shouldDuckAndroid: true,
+    //   interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+    // });
+    // console.log('.  setAudioModeAsync');
+    // if (this.recording !== null && this.recording !== undefined) {
+    //   this.recording.setOnRecordingStatusUpdate(null);
+    //   this.recording = null;
+    // }
 
-    const recording = new Audio.Recording();
-    this.recording = recording;
-    const recordingSettings = {
-      ios: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.ios, {
-        extension: '.mp4',
-        outputFormat: Expo.Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC
-      }),
-      android: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.android, {
-        extension: '.mp4',
-        outputFormat: Expo.Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4
-      })
-    };
-    console.log('settings', recordingSettings);
-    try {
-      await this.recording.prepareToRecordAsync(recordingSettings);
-      console.log('.   prepareToRecordAsync');
-      recording.setOnRecordingStatusUpdate(this._updateScreenForRecordingStatus);
-      await this.recording.startAsync();
-      console.log('.   recording.startAsync');
-      this.setState({ recordingStarted: true });
-    } catch (error) {
-      console.log('error!!', error);
-    }
+    // const recording = new Audio.Recording();
+    // this.recording = recording;
+    // const recordingSettings = {
+    //   ios: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.ios, {
+    //     extension: '.mp4',
+    //     outputFormat: Expo.Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC
+    //   }),
+    //   android: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.android, {
+    //     extension: '.mp4',
+    //     outputFormat: Expo.Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4
+    //   })
+    // };
+    // console.log('settings', recordingSettings);
+    // try {
+    //   await this.recording.prepareToRecordAsync(recordingSettings);
+    //   console.log('.   prepareToRecordAsync');
+    //   recording.setOnRecordingStatusUpdate(this._updateScreenForRecordingStatus);
+    //   await this.recording.startAsync();
+    //   console.log('.   recording.startAsync');
+    //   this.setState({ recordingStarted: true });
+    // } catch (error) {
+    //   console.log('error!!', error);
+    // }
   }
 
   _backToSelection() {
@@ -377,7 +387,7 @@ export default class Create extends Component {
     await this._saveRecording();
     try {
       await this._persistRecordings();
-      this.props.navigation.navigate('Landing');
+      this.props.navigation.navigate('List', { showRecordingTitle: true });
     } catch(error) {
       this.props.screenProps.showError(
         'Save Error',

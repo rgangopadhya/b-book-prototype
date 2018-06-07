@@ -9,19 +9,133 @@ import {
   View
 } from 'react-native';
 import {
-  getStories
+  getStories,
+  updateStoryWithTitle
 } from '../api';
 import color from '../utils/colors';
 import fonts from '../utils/fonts';
 import moment from 'moment';
 import durationToTime from '../utils/time';
+import { startRecording } from '../utils/recording';
+import { Confirm } from '../Components/Button';
+
+const Story = (props) => {
+  const { item, onPress } = props;
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      key={item.id}
+      style={styles.storyContainer}
+    >
+      <View style={styles.story}>
+        <Text style={styles.date}>
+          {moment(item.created_at).format('MMM D, YYYY')}
+        </Text>
+        <View>
+          <View style={styles.storyBacking1}>
+            <Image
+              source={require('../../assets/backing_1.png')}
+              style={styles.storyBackingImage1}
+              resizeMode='contain'
+            />
+          </View>
+          <View style={styles.storyBacking2}>
+            <Image
+              source={require('../../assets/backing_2.png')}
+              style={styles.storyBackingImage2}
+              resizeMode='contain'
+            />
+          </View>
+          <View style={styles.storyBacking3}>
+            <Image
+              source={require('../../assets/backing_3.png')}
+              style={styles.storyBackingImage3}
+              resizeMode='contain'
+            />
+          </View>
+          <ImageBackground
+            source={item.cover_image ? {uri: item.cover_image} : null}
+            style={styles.storyCoverImage}
+            resizeMode='contain'
+          >
+            <View style={styles.storyInfo}>
+              <Text style={styles.storyDuration}>
+                {durationToTime(item.duration)}
+              </Text>
+            </View>
+          </ImageBackground>
+          {props.showRecordingTitle &&
+            <SaveTitle
+              {...props}
+            />
+          }
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const SaveTitle = ({
+  isRecording, isConfirming, isSaving,
+  onStartRecording, onStopRecording, onConfirm
+}) => {
+  if (isRecording) {
+    return (
+      <TouchableOpacity
+        onPress={onStopRecording}
+      >
+        <Image
+          resizeMode='contain'
+          style={{}}
+          source={require('../../assets/title_wave_start.png')}
+        />
+      </TouchableOpacity>
+    );
+  } else if (isConfirming) {
+    return (
+      <View>
+        <Image
+          resizeMode='contain'
+          style={{}}
+          source={require('../../assets/title_wave_confirm.png')}
+        />
+        <Confirm
+          onPress={onConfirm}
+          disabled={isSaving}
+          baseHeight={100}
+          baseWidth={100}
+        />
+      </View>
+    );
+  }
+  return (
+    <TouchableOpacity
+      onPress={onStartRecording}
+    >
+      <Image
+        resizeMode='contain'
+        style={{}}
+        source={require('../../assets/title_wave_start.png')}
+      />
+    </TouchableOpacity>
+  );
+}
 
 export default class List extends Component {
 
   constructor(props) {
     super(props);
+    let showRecordingTitle = false;
+    if (this.props.navigation.state.params) {
+      showRecordingTitle = this.props.navigation.state.params.showRecordingTitle;
+    }
+    this.recording = null;
     this.state = {
-      stories: []
+      stories: [],
+      showRecordingTitle,
+      isRecordingTitle: false,
+      isConfirmingTitle: false,
+      isSavingTitle: false
     };
   }
 
@@ -46,6 +160,56 @@ export default class List extends Component {
     navigate('Story', { story });
   }
 
+  async _onStartRecordingTitle() {
+    if (this.recording !== null && this.recording !== undefined) {
+      this.recording.setOnRecordingStatusUpdate(null);
+      this.recording = null;
+    }
+    await startRecording(
+      (recording) => { this.recording = recording; },
+      () => {},
+      this._updateScreenForRecordingStatus
+    );
+  }
+
+  _updateScreenForRecordingStatus = (status) => {
+    if (status.canRecord) {
+      this.setState({ isRecordingTitle: true });
+    } else if (status.isDoneRecording) {
+      this.setState({ isRecordingTitle: false, isConfirmingTitle: true });
+    }
+  }
+
+  async _onStopRecordingTitle() {
+    if (this.recording !== null && this.recording !== undefined) {
+      try {
+        await this.recording.stopAndUnloadAsync();
+      } catch(error) {
+        // do nothing
+      }
+      this.recording.setOnRecordingStatusUpdate(null);
+      this.recording = null;
+    }
+  }
+
+  async _onConfirmRecordingTitle() {
+    this.setState({ isSavingTitle: true });
+    await updateStoryWithTitle(this.state.stories[0].id);
+    this.setState({
+      isConfirmingTitle: false,
+      isSavingTitle: false,
+      showRecordingTitle: false
+    });
+  }
+
+  async componentWillUnmount() {
+    if (this.recording !== null && this.recording !== undefined) {
+      await this.recording.stopAndUnloadAsync();
+      this.recording.setOnRecordingStatusUpdate(null);
+      this.recording = null;
+    }
+  }
+
   goBack() {
     this.props.navigation.goBack();
   }
@@ -68,53 +232,20 @@ export default class List extends Component {
               data={this.state.stories}
               keyExtractor={(item) => item.id}
               horizontal={true}
-              renderItem={({item}) => {
+              scrollEnabled={!this.state.showRecordingTitle}
+              renderItem={({item, index}) => {
                 return (
-                  <TouchableOpacity
-                    onPress={() => { this._onSelectStory(item) }}
-                    key={item.id}
-                    style={styles.storyContainer}
-                  >
-                    <View style={styles.story}>
-                      <Text style={styles.date}>
-                        {moment(item.created_at).format('MMM D, YYYY')}
-                      </Text>
-                      <View>
-                        <View style={styles.storyBacking1}>
-                          <Image
-                            source={require('../../assets/backing_1.png')}
-                            style={styles.storyBackingImage1}
-                            resizeMode='contain'
-                          />
-                        </View>
-                        <View style={styles.storyBacking2}>
-                          <Image
-                            source={require('../../assets/backing_2.png')}
-                            style={styles.storyBackingImage2}
-                            resizeMode='contain'
-                          />
-                        </View>
-                        <View style={styles.storyBacking3}>
-                          <Image
-                            source={require('../../assets/backing_3.png')}
-                            style={styles.storyBackingImage3}
-                            resizeMode='contain'
-                          />
-                        </View>
-                        <ImageBackground
-                          source={item.cover_image ? {uri: item.cover_image} : null}
-                          style={styles.storyCoverImage}
-                          resizeMode='contain'
-                        >
-                          <View style={styles.storyInfo}>
-                            <Text style={styles.storyDuration}>
-                              {durationToTime(item.duration)}
-                            </Text>
-                          </View>
-                        </ImageBackground>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
+                  <Story
+                    onPress={() => this._onSelectStory(item)}
+                    item={item}
+                    showRecordingTitle={this.state.showRecordingTitle && index === 0}
+                    onStartRecording={this._onStartRecordingTitle.bind(this)}
+                    onStopRecording={this._onStopRecordingTitle.bind(this)}
+                    onConfirm={this._onConfirmRecordingTitle.bind(this)}
+                    isRecording={this.state.isRecordingTitle}
+                    isConfirming={this.state.isConfirmingTitle}
+                    isSaving={this.state.isSavingTitle}
+                  />
                 );
               }}
             />

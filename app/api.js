@@ -45,6 +45,7 @@ export async function _makeRequest(method, path, body=null, addedHeaders={}) {
 
 export const postRequest = _makeRequest.bind(null, 'post');
 export const getRequest = _makeRequest.bind(null, 'get');
+export const patchRequest = _makeRequest.bind(null, 'patch');
 
 class APIError extends Error {
   constructor(response, ...params) {
@@ -180,6 +181,20 @@ export async function saveStoryRecording(sceneRecordings, character) {
     'Content-Type': 'multipart/form-data'
   });
   return result;
+}
+
+export async function updateStoryWithTitle(storyId, titleRecordingUri) {
+  let formData = new FormData();
+  let uriParts = titleRecordingUri.split('.');
+  let fileType = uriParts[uriParts.length - 1];
+  formData.append('title', {
+    uri: titleRecordingUri,
+    name: `${story.id}.${fileType}`,
+    type: `audio/x-${fileType}`
+  });
+  const result = await patchRequest(`v0/stories/${storyId}/`, formData, {
+    'Content-Type': 'multipart/form-data'
+  });
 }
 
 export async function getStories() {
