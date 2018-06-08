@@ -21,6 +21,7 @@ import { Confirm } from '../Components/Button';
 
 const Story = (props) => {
   const { item, onPress } = props;
+  console.log('== isRecording', props.isRecording);
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -79,6 +80,7 @@ const SaveTitle = ({
   isRecording, isConfirming, isSaving,
   onStartRecording, onStopRecording, onConfirm
 }) => {
+  console.log('== in SaveTitle', isRecording);
   if (isRecording) {
     return (
       <TouchableOpacity
@@ -130,6 +132,7 @@ export default class List extends Component {
       showRecordingTitle = this.props.navigation.state.params.showRecordingTitle;
     }
     this.recording = null;
+    this.recordingUri = null;
     this.state = {
       stories: [],
       showRecordingTitle,
@@ -150,6 +153,8 @@ export default class List extends Component {
   async componentDidMount() {
     this.startWaiting();
     const stories = await getStories();
+    // may not be best practice to do this here
+    // triggers another render
     this.setState({ stories });
     this.stopWaiting();
   }
@@ -165,6 +170,7 @@ export default class List extends Component {
       this.recording.setOnRecordingStatusUpdate(null);
       this.recording = null;
     }
+    console.log('== _onStartRecordingTitle ===');
     await startRecording(
       (recording) => { this.recording = recording; },
       () => {},
@@ -173,7 +179,9 @@ export default class List extends Component {
   }
 
   _updateScreenForRecordingStatus = (status) => {
+    console.log('== _updateScreenForRecordingStatus ==');
     if (status.canRecord) {
+      console.log(' canRecord');
       this.setState({ isRecordingTitle: true });
     } else if (status.isDoneRecording) {
       this.setState({ isRecordingTitle: false, isConfirmingTitle: true });
@@ -184,6 +192,7 @@ export default class List extends Component {
     if (this.recording !== null && this.recording !== undefined) {
       try {
         await this.recording.stopAndUnloadAsync();
+        this.recordingUri = this.recording.getURI();
       } catch(error) {
         // do nothing
       }
@@ -193,8 +202,12 @@ export default class List extends Component {
   }
 
   async _onConfirmRecordingTitle() {
+    if (this.recordingUri === null) {
+      throw new Error('No URI!');
+    }
     this.setState({ isSavingTitle: true });
-    await updateStoryWithTitle(this.state.stories[0].id);
+    await updateStoryWithTitle(this.state.stories[0].id, this.recordingUri);
+    this.recordingUri = null;
     this.setState({
       isConfirmingTitle: false,
       isSavingTitle: false,
@@ -211,7 +224,7 @@ export default class List extends Component {
   }
 
   goBack() {
-    this.props.navigation.goBack();
+    this.props.navigation.navigate('Landing');
   }
 
   render() {
@@ -220,6 +233,7 @@ export default class List extends Component {
         <TouchableOpacity
           onPress={this.goBack.bind(this)}
           style={styles.goBackButton}
+          disabled={this.state.showRecordingTitle}
         >
           <Image
             source={require('../../assets/back.png')}
@@ -233,10 +247,11 @@ export default class List extends Component {
               keyExtractor={(item) => item.id}
               horizontal={true}
               scrollEnabled={!this.state.showRecordingTitle}
+              extraData={this.state}
               renderItem={({item, index}) => {
                 return (
                   <Story
-                    onPress={() => this._onSelectStory(item)}
+                    onPress={this._onSelectStory.bind(this)}
                     item={item}
                     showRecordingTitle={this.state.showRecordingTitle && index === 0}
                     onStartRecording={this._onStartRecordingTitle.bind(this)}

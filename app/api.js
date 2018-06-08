@@ -189,7 +189,7 @@ export async function updateStoryWithTitle(storyId, titleRecordingUri) {
   let fileType = uriParts[uriParts.length - 1];
   formData.append('title', {
     uri: titleRecordingUri,
-    name: `${story.id}.${fileType}`,
+    name: `${storyId}.${fileType}`,
     type: `audio/x-${fileType}`
   });
   const result = await patchRequest(`v0/stories/${storyId}/`, formData, {
