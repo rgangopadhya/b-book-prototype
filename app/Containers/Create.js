@@ -207,10 +207,6 @@ export default class Create extends Component {
       this.recording.setOnRecordingStatusUpdate(null);
       this.recording = null;
     }
-    if (this.sound != null) {
-      this.sound.stopAsync();
-      this.sound = null;
-    }
   }
 
   startWaiting() {
@@ -248,7 +244,6 @@ export default class Create extends Component {
   }
 
   async startRecording() {
-    this.sound = null;
     if (this.recording !== null && this.recording !== undefined) {
       this.recording.setOnRecordingStatusUpdate(null);
       this.recording = null;

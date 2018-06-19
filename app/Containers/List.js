@@ -18,20 +18,36 @@ import moment from 'moment';
 import durationToTime from '../utils/time';
 import { startRecording } from '../utils/recording';
 import { Confirm } from '../Components/Button';
+import { ResponsiveImage } from '../Components/Responsive';
 
 const Story = (props) => {
   const { item, onPress } = props;
-  console.log('== isRecording', props.isRecording);
+  console.log('=== item ===', item, item.title);
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={ () => onPress(item) }
       key={item.id}
       style={styles.storyContainer}
+      disabled={props.showRecordingTitle}
     >
       <View style={styles.story}>
-        <Text style={styles.date}>
-          {moment(item.created_at).format('MMM D, YYYY')}
-        </Text>
+        <View style={styles.storyTitle}>
+          <Text style={styles.date}>
+            {moment(item.created_at).format('MMM D, YYYY')}
+          </Text>
+          {item.title !== null &&
+            <TouchableOpacity
+              onPress={ () => props.onPressPlay(item) }
+            >
+              <ResponsiveImage
+                source={require('../../assets/title_wave_confirm.png')}
+                baseWidth={80}
+                baseHeight={13}
+                style={{alignSelf: 'center'}}
+              />
+            </TouchableOpacity>
+          }
+        </View>
         <View>
           <View style={styles.storyBacking1}>
             <Image
@@ -65,7 +81,7 @@ const Story = (props) => {
               </Text>
             </View>
           </ImageBackground>
-          {props.showRecordingTitle &&
+          {props.showRecordingTitle && !props.isSavingTitle &&
             <SaveTitle
               {...props}
             />
@@ -77,49 +93,47 @@ const Story = (props) => {
 }
 
 const SaveTitle = ({
-  isRecording, isConfirming, isSaving,
+  isRecording, isSaving,
   onStartRecording, onStopRecording, onConfirm
 }) => {
   console.log('== in SaveTitle', isRecording);
-  if (isRecording) {
-    return (
-      <TouchableOpacity
-        onPress={onStopRecording}
-      >
-        <Image
-          resizeMode='contain'
-          style={{}}
-          source={require('../../assets/title_wave_start.png')}
-        />
-      </TouchableOpacity>
-    );
-  } else if (isConfirming) {
-    return (
-      <View>
-        <Image
-          resizeMode='contain'
-          style={{}}
-          source={require('../../assets/title_wave_confirm.png')}
-        />
-        <Confirm
-          onPress={onConfirm}
-          disabled={isSaving}
-          baseHeight={100}
-          baseWidth={100}
-        />
-      </View>
-    );
-  }
   return (
-    <TouchableOpacity
-      onPress={onStartRecording}
+    <View
+      style={styles.saveTitle}
     >
-      <Image
-        resizeMode='contain'
-        style={{}}
-        source={require('../../assets/title_wave_start.png')}
-      />
-    </TouchableOpacity>
+      {isRecording &&
+        <View
+          style={{flexDirection: 'row'}}
+        >
+          <ResponsiveImage
+            resizeMode='contain'
+            baseWidth={75}
+            baseHeight={11}
+            style={{backgroundColor: 'white', padding: 50}}
+            source={require('../../assets/title_wave_confirm.png')}
+          />
+          <Confirm
+            style={{}}
+            onPress={onConfirm}
+            disabled={isSaving}
+            baseHeight={50}
+            baseWidth={50}
+          />
+        </View>
+      }
+      {!isRecording &&
+        <TouchableOpacity
+          onPress={onStartRecording}
+          style={{backgroundColor: color('teal', 500), padding: 50, alignItems: 'center'}}
+        >
+          <Image
+            resizeMode='contain'
+            style={{}}
+            source={require('../../assets/title_wave_start.png')}
+          />
+        </TouchableOpacity>
+      }
+    </View>
   );
 }
 
@@ -132,7 +146,6 @@ export default class List extends Component {
       showRecordingTitle = this.props.navigation.state.params.showRecordingTitle;
     }
     this.recording = null;
-    this.recordingUri = null;
     this.state = {
       stories: [],
       showRecordingTitle,
@@ -192,7 +205,7 @@ export default class List extends Component {
     if (this.recording !== null && this.recording !== undefined) {
       try {
         await this.recording.stopAndUnloadAsync();
-        this.recordingUri = this.recording.getURI();
+        return this.recording.getURI();
       } catch(error) {
         // do nothing
       }
@@ -202,12 +215,9 @@ export default class List extends Component {
   }
 
   async _onConfirmRecordingTitle() {
-    if (this.recordingUri === null) {
-      throw new Error('No URI!');
-    }
+    const recordingUri = await this._onStopRecordingTitle();
     this.setState({ isSavingTitle: true });
-    await updateStoryWithTitle(this.state.stories[0].id, this.recordingUri);
-    this.recordingUri = null;
+    await updateStoryWithTitle(this.state.stories[0].id, recordingUri);
     this.setState({
       isConfirmingTitle: false,
       isSavingTitle: false,
@@ -215,11 +225,35 @@ export default class List extends Component {
     });
   }
 
+  async _onPressPlayTitle(story) {
+    this.startWaiting();
+    if (story.title === null) {
+      return;
+    }
+    const sound = new Expo.Audio.Sound();
+    sound.setOnPlaybackStatusUpdate(this._onPlaybackStatusUpdate);
+    this.sound = sound;
+
+    try {
+      await sound.loadAsync({ uri: story.title });
+      await sound.playAsync();
+    } catch(error) {
+      console.log('woops', error);
+    } finally {
+      this.stopWaiting();
+    }
+  }
+
   async componentWillUnmount() {
     if (this.recording !== null && this.recording !== undefined) {
       await this.recording.stopAndUnloadAsync();
       this.recording.setOnRecordingStatusUpdate(null);
       this.recording = null;
+    }
+
+    if (this.sound !== null && this.sound !== undefined) {
+      await this.sound.stopAsync();
+      this.sound = null;
     }
   }
 
@@ -257,6 +291,7 @@ export default class List extends Component {
                     onStartRecording={this._onStartRecordingTitle.bind(this)}
                     onStopRecording={this._onStopRecordingTitle.bind(this)}
                     onConfirm={this._onConfirmRecordingTitle.bind(this)}
+                    onPressPlay={this._onPressPlayTitle.bind(this)}
                     isRecording={this.state.isRecordingTitle}
                     isConfirming={this.state.isConfirmingTitle}
                     isSaving={this.state.isSavingTitle}
@@ -274,14 +309,15 @@ export default class List extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color('blue', 500),
+    backgroundColor: color('blue', 500)
   },
   stories: {
-    paddingHorizontal: 100
+    paddingHorizontal: 100,
+    alignSelf: 'center'
   },
   storyContainer: {
     flex: 1,
-    padding: 20,
+    padding: 100,
     paddingVertical: 50,
     justifyContent: 'center'
   },
@@ -289,7 +325,13 @@ const styles = StyleSheet.create({
     padding: 30
   },
   story: {
-    paddingHorizontal: 100
+    minHeight: 500,
+    padding: 10
+  },
+  storyTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   date: {
     ...fonts.bold,
@@ -337,5 +379,13 @@ const styles = StyleSheet.create({
   storyDuration: {
     ...fonts.bold,
     fontSize: 16
+  },
+  saveTitle: {
+    flex: 1,
+    paddingVertical: 90,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center'
   }
 });
