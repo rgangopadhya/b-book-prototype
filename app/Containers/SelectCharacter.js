@@ -81,7 +81,8 @@ export default class SelectCharacter extends Component {
     this.state = {
       characters: [],
       selectedCharacter: null,
-      scenesForSelectedCharacter: []
+      scenesForSelectedCharacter: [],
+      isSequential: false
     };
   }
 
@@ -114,9 +115,11 @@ export default class SelectCharacter extends Component {
       this.stopWaiting();
       return;
     }
+    // quick hack to make harry legs sequential
     this.setState({
       scenesForSelectedCharacter: [],
-      selectedCharacter: character
+      selectedCharacter: character,
+      isSequential: character.id === 2
     });
     const scenes = await getScenesForCharacter(character.id);
     await this._prefetchImages(scenes);
@@ -173,12 +176,15 @@ export default class SelectCharacter extends Component {
             style={{backgroundColor: 'white', justifyContent: 'center', alignItems: 'center', flex: 1}}
             baseHeight={127}
             baseWidth={170}
+            disabled={this.state.isSequential}
           >
-            <ResponsiveImage
-              source={require('../../assets/shuffle.png')}
-              baseHeight={56}
-              baseWidth={99}
-            />
+            {!this.state.isSequential &&
+              <ResponsiveImage
+                source={require('../../assets/shuffle.png')}
+                baseHeight={56}
+                baseWidth={99}
+              />
+            }
           </ResponsiveButton>
           <SceneList
             scenes={this.state.scenesForSelectedCharacter}
