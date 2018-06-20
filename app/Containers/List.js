@@ -18,11 +18,13 @@ import moment from 'moment';
 import durationToTime from '../utils/time';
 import { startRecording } from '../utils/recording';
 import { Confirm } from '../Components/Button';
-import { ResponsiveImage } from '../Components/Responsive';
+import {
+  ResponsiveImage,
+  ResponsiveImageBackground
+} from '../Components/Responsive';
 
 const Story = (props) => {
   const { item, onPress } = props;
-  console.log('=== item ===', item, item.title);
   return (
     <TouchableOpacity
       onPress={ () => onPress(item) }
@@ -50,38 +52,46 @@ const Story = (props) => {
         </View>
         <View>
           <View style={styles.storyBacking1}>
-            <Image
+            <ResponsiveImage
               source={require('../../assets/backing_1.png')}
               style={styles.storyBackingImage1}
+              baseWidth={370}
+              baseHeight={300}
               resizeMode='contain'
             />
           </View>
           <View style={styles.storyBacking2}>
-            <Image
+            <ResponsiveImage
               source={require('../../assets/backing_2.png')}
               style={styles.storyBackingImage2}
+              baseWidth={362}
+              baseHeight={280}
               resizeMode='contain'
             />
           </View>
           <View style={styles.storyBacking3}>
-            <Image
+            <ResponsiveImage
               source={require('../../assets/backing_3.png')}
               style={styles.storyBackingImage3}
+              baseWidth={362}
+              baseHeight={280}
               resizeMode='contain'
             />
           </View>
-          <ImageBackground
+          <ResponsiveImageBackground
             source={item.cover_image ? {uri: item.cover_image} : null}
             style={styles.storyCoverImage}
             resizeMode='contain'
+            baseWidth={333}
+            baseHeight={250}
           >
             <View style={styles.storyInfo}>
               <Text style={styles.storyDuration}>
                 {durationToTime(item.duration)}
               </Text>
             </View>
-          </ImageBackground>
-          {props.showRecordingTitle && !props.isSavingTitle &&
+          </ResponsiveImageBackground>
+          {props.showRecordingTitle && !props.isSaving &&
             <SaveTitle
               {...props}
             />
@@ -96,43 +106,47 @@ const SaveTitle = ({
   isRecording, isSaving,
   onStartRecording, onStopRecording, onConfirm
 }) => {
-  console.log('== in SaveTitle', isRecording);
   return (
-    <View
-      style={styles.saveTitle}
-    >
-      {isRecording &&
-        <View
-          style={{flexDirection: 'row'}}
-        >
-          <ResponsiveImage
-            resizeMode='contain'
-            baseWidth={75}
-            baseHeight={11}
-            style={{backgroundColor: 'white', padding: 50}}
-            source={require('../../assets/title_wave_confirm.png')}
-          />
-          <Confirm
-            style={{}}
-            onPress={onConfirm}
-            disabled={isSaving}
-            baseHeight={50}
-            baseWidth={50}
-          />
-        </View>
-      }
-      {!isRecording &&
-        <TouchableOpacity
-          onPress={onStartRecording}
-          style={{backgroundColor: color('teal', 500), padding: 50, alignItems: 'center'}}
-        >
-          <Image
-            resizeMode='contain'
-            style={{}}
-            source={require('../../assets/title_wave_start.png')}
-          />
-        </TouchableOpacity>
-      }
+    <View style={{paddingTop: 50}}>
+      <View
+        style={styles.saveTitle}
+      >
+        {isRecording &&
+          <View
+            style={{flexDirection: 'row'}}
+          >
+            <View
+              style={{backgroundColor: 'white', padding: 50, alignItems: 'center', justifyContent: 'center', flex: 3}}
+            >
+              <ResponsiveImage
+                resizeMode='contain'
+                baseWidth={75}
+                baseHeight={11}
+                source={require('../../assets/title_wave_confirm.png')}
+              />
+            </View>
+            <Confirm
+              onPress={onConfirm}
+              style={{flex: 1, height: 100}}
+              disabled={isSaving}
+              baseHeight={50}
+              baseWidth={50}
+            />
+          </View>
+        }
+        {!isRecording &&
+          <TouchableOpacity
+            onPress={onStartRecording}
+            style={{backgroundColor: color('teal', 500), padding: 50, alignItems: 'center'}}
+          >
+            <Image
+              resizeMode='contain'
+              style={{}}
+              source={require('../../assets/title_wave_start.png')}
+            />
+          </TouchableOpacity>
+        }
+      </View>
     </View>
   );
 }
@@ -173,7 +187,6 @@ export default class List extends Component {
   }
 
   _onSelectStory(story) {
-    console.log('=== selecting story ===', story);
     const { navigate } = this.props.navigation;
     navigate('Story', { story });
   }
@@ -183,7 +196,6 @@ export default class List extends Component {
       this.recording.setOnRecordingStatusUpdate(null);
       this.recording = null;
     }
-    console.log('== _onStartRecordingTitle ===');
     await startRecording(
       (recording) => { this.recording = recording; },
       () => {},
@@ -192,9 +204,7 @@ export default class List extends Component {
   }
 
   _updateScreenForRecordingStatus = (status) => {
-    console.log('== _updateScreenForRecordingStatus ==');
     if (status.canRecord) {
-      console.log(' canRecord');
       this.setState({ isRecordingTitle: true });
     } else if (status.isDoneRecording) {
       this.setState({ isRecordingTitle: false, isConfirmingTitle: true });
@@ -215,13 +225,15 @@ export default class List extends Component {
   }
 
   async _onConfirmRecordingTitle() {
-    const recordingUri = await this._onStopRecordingTitle();
     this.setState({ isSavingTitle: true });
-    await updateStoryWithTitle(this.state.stories[0].id, recordingUri);
+    const recordingUri = await this._onStopRecordingTitle();
+    const story = await updateStoryWithTitle(this.state.stories[0].id, recordingUri);
+    const stories = [story, ...this.state.stories.slice(1)];
     this.setState({
       isConfirmingTitle: false,
       isSavingTitle: false,
-      showRecordingTitle: false
+      showRecordingTitle: false,
+      stories
     });
   }
 
@@ -318,8 +330,7 @@ const styles = StyleSheet.create({
   storyContainer: {
     flex: 1,
     padding: 100,
-    paddingVertical: 50,
-    justifyContent: 'center'
+    paddingVertical: 150
   },
   goBackButton: {
     padding: 30

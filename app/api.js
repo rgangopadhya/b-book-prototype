@@ -105,6 +105,11 @@ export async function checkLogin() {
   }
 }
 
+export async function hasStories() {
+  const result = await getRequest('v0/stories/?per_page=1');
+  return result.stories.length > 0;
+}
+
 export async function logout() {
   await postRequest('rest-auth/logout/');
 }
@@ -195,6 +200,7 @@ export async function updateStoryWithTitle(storyId, titleRecordingUri) {
   const result = await patchRequest(`v0/stories/${storyId}/`, formData, {
     'Content-Type': 'multipart/form-data'
   });
+  return result.story;
 }
 
 export async function getStories() {

@@ -8,7 +8,8 @@ import {
 } from 'react-native'
 import color from '../utils/colors';
 import {
-  checkLogin
+  checkLogin,
+  hasStories as checkHasStories
 } from '../api';
 
 const IMAGES = {
@@ -35,6 +36,7 @@ export default class Landing extends Component {
     super(props);
     this.state = {
       isLoggedIn: false,
+      hasStories: false,
       user: null
     };
   }
@@ -67,17 +69,22 @@ export default class Landing extends Component {
     if (!isLoggedIn) {
       this.props.navigation.navigate('Login');
     }
+
+    const hasStories = await checkHasStories();
+    this.setState({ hasStories });
     this.props.screenProps.hideSpinner();
   }
 
 	render() {
 		return (
 			<View style={styles.container}>
-        <Option
-          onPress={this.onPressList.bind(this)}
-          imageSource={IMAGES.listen}
-          style={{ backgroundColor: color('blue', 500) }}
-        />
+        {this.state.hasStories &&
+          <Option
+            onPress={this.onPressList.bind(this)}
+            imageSource={IMAGES.listen}
+            style={{ backgroundColor: color('blue', 500) }}
+          />
+        }
         <Option
           onPress={this.onPressCreate.bind(this)}
           imageSource={IMAGES.create}

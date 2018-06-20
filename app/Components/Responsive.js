@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Dimensions,
   Image,
+  ImageBackground,
   TouchableOpacity
 } from 'react-native';
 
@@ -28,6 +29,19 @@ export const ResponsiveImage = (props) => {
       style={[style, { height, width }]}
       {...rest}
     />
+  );
+};
+
+export const ResponsiveImageBackground = (props) => {
+  const { baseWidth, baseHeight, style = {}, children, ...rest } = props;
+  const { width, height } = getScaledDimensions(baseWidth, baseHeight);
+  return (
+    <ImageBackground
+      style={[style, { height, width }]}
+      {...rest}
+    >
+      {children}
+    </ImageBackground>
   );
 };
 
