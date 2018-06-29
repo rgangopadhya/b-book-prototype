@@ -16,6 +16,9 @@ import List from './app/Containers/List';
 import Story from './app/Containers/Story';
 import ErrorNotification from './app/Components/ErrorNotification';
 
+// view network requests
+GLOBAL.XMLHttpRequest = GLOBAL.originalXMLHttpRequest || GLOBAL.XMLHttpRequest;
+
 const Navigator = StackNavigator({
   Landing: { screen: Landing },
   Login: { screen: Login },

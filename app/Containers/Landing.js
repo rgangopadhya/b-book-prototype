@@ -68,10 +68,11 @@ export default class Landing extends Component {
     this.setState({ user, isLoggedIn });
     if (!isLoggedIn) {
       this.props.navigation.navigate('Login');
+    } else {
+      const hasStories = await checkHasStories();
+      this.setState({ hasStories });
     }
 
-    const hasStories = await checkHasStories();
-    this.setState({ hasStories });
     this.props.screenProps.hideSpinner();
   }
 

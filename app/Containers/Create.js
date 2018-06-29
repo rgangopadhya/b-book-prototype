@@ -19,7 +19,7 @@ import color from '../utils/colors';
 import fonts from '../utils/fonts';
 import {
   getScenes,
-  saveStoryRecording
+  saveStory
 } from '../api';
 import { Confirm, Cancel } from '../Components/Button';
 import Modal from '../Components/Modal';
@@ -177,6 +177,8 @@ export default class Create extends Component {
       haveRecordingPermissions: false,
       character: this.props.navigation.state.params.character,
       scenes: this.props.navigation.state.params.scenes,
+      sceneDurations: {},
+      pastDuration: 0,
       currentSceneIndex: 0,
       cancelModalVisible: false,
       confirmModalVisible: false
@@ -253,44 +255,6 @@ export default class Create extends Component {
       () => this.setState({ recordingStarted: true }),
       this._updateScreenForRecordingStatus
     );
-    // console.log('=== startRecording ====');
-    // console.log('.   setState');
-    // await Audio.setAudioModeAsync({
-    //   allowsRecordingIOS: true,
-    //   interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-    //   playsInSilentModeIOS: true,
-    //   shouldDuckAndroid: true,
-    //   interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-    // });
-    // console.log('.  setAudioModeAsync');
-    // if (this.recording !== null && this.recording !== undefined) {
-    //   this.recording.setOnRecordingStatusUpdate(null);
-    //   this.recording = null;
-    // }
-
-    // const recording = new Audio.Recording();
-    // this.recording = recording;
-    // const recordingSettings = {
-    //   ios: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.ios, {
-    //     extension: '.mp4',
-    //     outputFormat: Expo.Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC
-    //   }),
-    //   android: Object.assign({}, Expo.Audio.RECORDING_OPTIONS_PRESET_HIGH_QUALITY.android, {
-    //     extension: '.mp4',
-    //     outputFormat: Expo.Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4
-    //   })
-    // };
-    // console.log('settings', recordingSettings);
-    // try {
-    //   await this.recording.prepareToRecordAsync(recordingSettings);
-    //   console.log('.   prepareToRecordAsync');
-    //   recording.setOnRecordingStatusUpdate(this._updateScreenForRecordingStatus);
-    //   await this.recording.startAsync();
-    //   console.log('.   recording.startAsync');
-    //   this.setState({ recordingStarted: true });
-    // } catch (error) {
-    //   console.log('error!!', error);
-    // }
   }
 
   _backToSelection() {
@@ -379,9 +343,10 @@ export default class Create extends Component {
   async _onFinalConfirmation() {
     this.startWaiting();
     this.setState({ confirmModalVisible: false });
+    const recordingUri = this.recording.getURI();
     await this._saveRecording();
     try {
-      await this._persistRecordings();
+      await this._persistRecordings(recordingUri);
       this.props.navigation.navigate('List', { showRecordingTitle: true });
     } catch(error) {
       this.props.screenProps.showError(
@@ -395,36 +360,51 @@ export default class Create extends Component {
 
   async _onConfirmRecording() {
     this.startWaiting();
+    const duration = this.getDuration();
     if (this.onLastScene()) {
       await this._showConfirmModal();
     } else {
-      await this._saveRecording();
-      this.startRecording();
+      const currScene = this.state.scenes[this.state.currentSceneIndex].id;
       this.setState({
         currentSceneIndex: this.state.currentSceneIndex + 1,
-        recordingPaused: false
+        recordingPaused: false,
+        pastDuration: this.state.pastDuration + duration,
+        sceneDurations: {[currScene]: duration, ...this.state.sceneDurations}
       });
     }
     this.stopWaiting();
   }
 
-  async _saveRecording() {
-    // only save recording if we havent already
-    if (this.state.currentSceneIndex <= 4) {
-      this.sceneRecordings.push({
-        sceneId: this.state.scenes[this.state.currentSceneIndex].id,
-        recordingUri: this.recording.getURI(),
-        duration: this.state.recordingDuration
-      });
+  getDuration() {
+    const previousScene = this.state.currentSceneIndex === 0 ? null : this.state.currentSceneIndex - 1;
+    if (previousScene === null) {
+      return this.state.recordingDuration;
     }
+    return this.state.recordingDuration - this.state.pastDuration;
+  }
+
+  async _saveRecording() {
+    // // only save recording if we havent already
+    // if (this.state.currentSceneIndex <= 4) {
+      // this.sceneRecordings.push({
+      //   sceneId: this.state.scenes[this.state.currentSceneIndex].id,
+      //   recordingUri: this.recording.getURI(),
+      //   duration: this.state.recordingDuration
+      // });
+    // }
     await this._resetRecording();
   }
 
-  async _persistRecordings() {
+  async _persistRecordings(recordingUri) {
     this.startWaiting();
+    console.log('=== about to save ===');
     try {
-      await saveStoryRecording(this.sceneRecordings, this.state.character);
-      this.sceneRecordings = [];
+      await saveStory(
+        recordingUri,
+        this.state.scenes.map(s => s.id),
+        this.state.sceneDurations,
+        this.state.character.id
+      );
     } catch(error) {
       console.log('Save error', error);
     }

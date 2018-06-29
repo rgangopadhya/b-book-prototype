@@ -28,6 +28,7 @@ export async function _makeRequest(method, path, body=null, addedHeaders={}) {
   if (body && headers.get('Content-Type') === 'application/json') {
     options.body = JSON.stringify(body);
   } else if (body && headers.get('Content-Type') == 'multipart/form-data') {
+    console.log('=== doing multipart ===');
     options.body = body;
   }
 
@@ -49,10 +50,10 @@ export const patchRequest = _makeRequest.bind(null, 'patch');
 
 class APIError extends Error {
   constructor(response, ...params) {
-    super(...params);
+    super(response, ...params);
     // Maintains proper stack trace for where our error was thrown (only available on V8)
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, CustomError);
+      Error.captureStackTrace(this, APIError);
     }
     this.response = response;
     this.isAPIError = true;
@@ -185,6 +186,27 @@ export async function saveStoryRecording(sceneRecordings, character) {
   const result = await postRequest('v0/story_recordings/', formData, {
     'Content-Type': 'multipart/form-data'
   });
+  return result;
+}
+
+export async function saveStory(recordingUri, sceneIds, durations, characterId) {
+  let formData = new FormData();
+  formData.append('scene_order', sceneIds.join(','));
+  formData.append('durations', JSON.stringify(durations));
+  formData.append('character', characterId);
+  let uriParts = recordingUri.split('.');
+  let fileType = uriParts[uriParts.length - 1];
+  // should consider adding more to the name
+  formData.append('recording', {
+    uri: recordingUri,
+    name: `${characterId}.${fileType}`,
+    type: `audio/x-${fileType}`
+  });
+  console.log('=== in saveStory ===', formData);
+  const result = await postRequest('v0/stories/', formData, {
+    'Content-Type': 'multipart/form-data'
+  });
+  console.log('=== got result ===');
   return result;
 }
 
