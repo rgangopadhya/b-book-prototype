@@ -79,10 +79,8 @@ export default class Story extends Component {
     this.state = {
       story: this.props.navigation.state.params.story,
       isLoaded: false,
-      sceneRecordings: [],
       scenes: [],
       currentScene: null,
-      currentSceneRecording: null,
       isPlaying: false,
       index: 0
     };
@@ -111,11 +109,10 @@ export default class Story extends Component {
 
   async _loadStory() {
     this.startWaiting();
-    const { scenes, sceneRecordings } = await loadStoryData(this.state.story.id);
+    const { scenes, story } = await loadStoryData(this.state.story.id);
     await this._prefetchImages(scenes);
     this.setState({
       scenes,
-      sceneRecordings,
       currentScene: scenes[0],
       isLoaded: true
     });
@@ -129,18 +126,17 @@ export default class Story extends Component {
   }
 
   async start() {
-    const recording = this.state.sceneRecordings.find(r => r.scene == this.state.currentScene.id);
     this.setState({ isPlaying: true });
-    await this._playRecording(recording);
+    await this._playRecording();
   }
 
-  async _playRecording(sceneRecording) {
+  async _playRecording() {
     this.startWaiting();
     const sound = new Expo.Audio.Sound();
     sound.setOnPlaybackStatusUpdate(this._onPlaybackStatusUpdate)
     this.sound = sound;
     try {
-      await sound.loadAsync({ uri: sceneRecording.recording });
+      await sound.loadAsync({ uri: this.state.story.recording });
       await sound.playAsync();
     } catch(error) {
       console.log('oh noes', error);
@@ -163,30 +159,17 @@ export default class Story extends Component {
     this.setState({ isPlaying: true });
   }
 
-  async _startNextSceneOrFinish() {
+  async finish() {
     this.startWaiting();
-    if (this.state.index >= this.state.scenes.length - 1) {
-      // reset, no longer playing
-      this.setState({
-        index: 0,
-        currentScene: this.state.scenes[0],
-        soundPosition: 0,
-        isPlaying: false
-      });
-      this.stopWaiting();
-      return;
-    }
-
-    const nextIndex = this.state.index + 1;
-    const nextScene = this.state.scenes[nextIndex];
-    const nextRecording = this.state.sceneRecordings.find(r => r.scene === nextScene.id);
+    // reset, no longer playing
     this.setState({
-      currentScene: nextScene,
-      index: nextIndex,
-      soundPosition: 0
+      index: 0,
+      currentScene: this.state.scenes[0],
+      soundPosition: 0,
+      isPlaying: false
     });
-    await this._playRecording(nextRecording);
     this.stopWaiting();
+    return;
   }
 
   _onPlaybackStatusUpdate = (status) => {
@@ -201,8 +184,15 @@ export default class Story extends Component {
 
       if (status.isPlaying) {
         // Update your UI for the playing state
+        const nextIndex = this.state.index + 1;
+        const cumulativeDurationForScene = this.state.scenes.slice(0, nextIndex).reduce(
+          (acc, el) => { return acc + el.duration }, 0
+        );
+        let shouldUpdateScene = status.positionMillis > cumulativeDurationForScene;
+        shouldUpdateScene = shouldUpdateScene && nextIndex < this.state.scenes.length;
         this.setState({
-          soundPosition: status.positionMillis
+          soundPosition: status.positionMillis,
+          currentScene: shouldUpdateScene ? this.state.scenes[nextIndex] : this.state.currentScene
         });
       } else {
         // Update your UI for the paused state
@@ -216,7 +206,7 @@ export default class Story extends Component {
         // The player has just finished playing and will stop. Maybe you want to play something else?
         this.sound.unloadAsync();
         this.sound = null;
-        this._startNextSceneOrFinish();
+        this.finish();
       }
     }
   }
@@ -254,7 +244,7 @@ export default class Story extends Component {
               <PlaybackCursor
                 index={this.state.index}
                 soundPosition={this.state.soundPosition}
-                durations={this.state.sceneRecordings.map(d => d.duration)}
+                durations={this.state.scenes.map(s => s.duration)}
                 isPlaying={this.state.isPlaying}
                 onPause={this._pausePlayback.bind(this)}
                 onResume={this._resumePlayback.bind(this)}

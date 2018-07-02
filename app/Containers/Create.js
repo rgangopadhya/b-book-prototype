@@ -27,7 +27,7 @@ import { ResponsiveImage } from '../Components/Responsive';
 import durationToTime from '../utils/time';
 import { startRecording as startRecordingUtil } from '../utils/recording';
 
-const StartRecording = ({onConfirm, onCancel}) => {
+const StartRecording = ({onConfirm, onCancel, isCountingDown}) => {
   return (
     <View style={styles.startRecording}>
       <Cancel
@@ -39,6 +39,7 @@ const StartRecording = ({onConfirm, onCancel}) => {
       <TouchableOpacity
         onPress={onConfirm}
         style={styles.startRecordingButton}
+        disabled={isCountingDown}
       >
         <Image
           source={require('../../assets/start_record_doggie.png')}
@@ -344,7 +345,7 @@ export default class Create extends Component {
     this.startWaiting();
     this.setState({ confirmModalVisible: false });
     const recordingUri = this.recording.getURI();
-    await this._saveRecording();
+    await this._resetRecording();
     try {
       await this._persistRecordings(recordingUri);
       this.props.navigation.navigate('List', { showRecordingTitle: true });
@@ -361,15 +362,17 @@ export default class Create extends Component {
   async _onConfirmRecording() {
     this.startWaiting();
     const duration = this.getDuration();
+    const currScene = this.state.scenes[this.state.currentSceneIndex].id;
+    this.setState({
+        sceneDurations: {[currScene]: duration, ...this.state.sceneDurations},
+        pastDuration: this.state.pastDuration + duration
+    });
     if (this.onLastScene()) {
       await this._showConfirmModal();
     } else {
-      const currScene = this.state.scenes[this.state.currentSceneIndex].id;
       this.setState({
         currentSceneIndex: this.state.currentSceneIndex + 1,
-        recordingPaused: false,
-        pastDuration: this.state.pastDuration + duration,
-        sceneDurations: {[currScene]: duration, ...this.state.sceneDurations}
+        recordingPaused: false
       });
     }
     this.stopWaiting();
@@ -381,18 +384,6 @@ export default class Create extends Component {
       return this.state.recordingDuration;
     }
     return this.state.recordingDuration - this.state.pastDuration;
-  }
-
-  async _saveRecording() {
-    // // only save recording if we havent already
-    // if (this.state.currentSceneIndex <= 4) {
-      // this.sceneRecordings.push({
-      //   sceneId: this.state.scenes[this.state.currentSceneIndex].id,
-      //   recordingUri: this.recording.getURI(),
-      //   duration: this.state.recordingDuration
-      // });
-    // }
-    await this._resetRecording();
   }
 
   async _persistRecordings(recordingUri) {
@@ -463,6 +454,7 @@ export default class Create extends Component {
               <StartRecording
                 onCancel={this._backToSelection.bind(this)}
                 onConfirm={this._startFirstRecording.bind(this)}
+                isCountingDown={this.state.isCountingDown}
               />
             }
             {this.state.recordingStarted &&
