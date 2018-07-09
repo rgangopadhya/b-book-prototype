@@ -361,12 +361,6 @@ export default class Create extends Component {
 
   async _onConfirmRecording() {
     this.startWaiting();
-    const duration = this.getDuration();
-    const currScene = this.state.scenes[this.state.currentSceneIndex].id;
-    this.setState({
-        sceneDurations: {[currScene]: duration, ...this.state.sceneDurations},
-        pastDuration: this.state.pastDuration + duration
-    });
     if (this.onLastScene()) {
       await this._showConfirmModal();
     } else {
@@ -375,6 +369,12 @@ export default class Create extends Component {
         recordingPaused: false
       });
     }
+    const duration = this.getDuration();
+    const currScene = this.state.scenes[this.state.currentSceneIndex].id;
+    this.setState({
+        sceneDurations: {[currScene]: duration, ...this.state.sceneDurations},
+        pastDuration: this.state.pastDuration + duration
+    });
     this.stopWaiting();
   }
 

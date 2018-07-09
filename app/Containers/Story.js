@@ -24,11 +24,12 @@ const PlaybackCursor = ({
   isPlaying, onPause, onResume}) => {
   const totalDuration = durations.reduce((a, b) => a + b, 0);
   const segmentFractions = durations.map(d => d / totalDuration);
-  const playbackTime = durations.filter((d, i) => {
+  const currSegmentPosition = soundPosition - durations.filter((d, i) => {
     return i < index;
   }).reduce((acc, d) => {
     return acc + d;
-  }, 0) + soundPosition;
+  }, 0);
+  console.log('=== index', index, 'pos', soundPosition, 'total', totalDuration, 'fractions', segmentFractions);
   return (
     <TouchableOpacity
       onPress={isPlaying ? onPause : onResume}
@@ -39,12 +40,12 @@ const PlaybackCursor = ({
       >
         <View style={{backgroundColor: 'transparent'}}>
           <Text style={[styles.playbackDurationText, isPlaying ? {} : styles.playbackPausedText]}>
-            {durationToTime(playbackTime)}
+            {durationToTime(soundPosition)}
           </Text>
         </View>
         {segmentFractions.map((segmentFraction, i) => {
           const duration = durations[i];
-          let fill = index > i ? 1 : index === i ? soundPosition / duration : 0;
+          let fill = index > i ? 1 : index === i ? currSegmentPosition / duration : 0;
           return (
             <PlaybackCursorSegment
               width={`${segmentFraction * 85}%`}
@@ -192,6 +193,7 @@ export default class Story extends Component {
         shouldUpdateScene = shouldUpdateScene && nextIndex < this.state.scenes.length;
         this.setState({
           soundPosition: status.positionMillis,
+          index: shouldUpdateScene ? nextIndex : this.state.index,
           currentScene: shouldUpdateScene ? this.state.scenes[nextIndex] : this.state.currentScene
         });
       } else {
